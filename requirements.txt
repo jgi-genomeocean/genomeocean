@@ -1,0 +1,10 @@
+numpy==1.26.4
+torch==2.4.0
+biopython==1.83
+einops==0.7.0
+transformers==4.44.2
+vllm==0.6.1.post2
+flash-attn==2.6.3
+triton==3.0.0
+tqdm==4.66.4
+scikit-learn==1.5.0

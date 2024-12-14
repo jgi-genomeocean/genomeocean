@@ -1,0 +1,7 @@
+.go*
+test_data/*
+slurm*.out
+__pycache__
+*/__pycache__/*
+*/*/__pycache__/*
+*.ipynb_checkpoints
