@@ -3,7 +3,7 @@
 # Date: 2024-09-12
 """
 Example usage:
-from gmeval.llm_utils import LLMUtils
+from genomeocean.llm_utils import LLMUtils
 
 """
 import os

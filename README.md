@@ -21,7 +21,7 @@ GenomeOcean is compatible with all the standard HuggingFace APIs. Our implement 
 
 #### 2.1.1 Sequence Generation
 ```python
-from gmeval.generation import SequenceGenerator
+from genomeocean.generation import SequenceGenerator
 
 sequences = [
     "GCCGCTAAAAAGCGACCAGAATGATCCAAAAAAGAAGGCAGGCCAGCACCATCCGTTTTTTACAGCTCCAGAACTTCCTTT", 
@@ -55,7 +55,7 @@ seq_gen.save_sequences(
 
 #### 2.1.2 Sequence Embedding
 ```python
-from gmeval.llm_utils import LLMUtils
+from genomeocean.llm_utils import LLMUtils
 
 sequences = [
     "GCCGCTAAAAAGCGACCAGAATGATCCAAAAAAGAAGGCAGGCCAGCACCATCCGTTTTTTACAGCTCCAGAACTTCCTTT", 
