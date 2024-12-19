@@ -8,3 +8,4 @@ flash-attn==2.6.3
 triton==3.0.0
 tqdm==4.66.4
 scikit-learn==1.5.0
+torch==2.4.0

@@ -28,7 +28,7 @@ sequences = [
     "CAGTCAGTGGCTAGCATGCTAGCATCGATCGATCGATCGATCGATCGATCGATCGGTGCATGCTAGCATCGATCGATCGAA"
 ]
 seq_gen = SequenceGenerator(
-    model_dir='pGenomeOcean/GenomeOcean-4B', 
+    model_dir='pGenomeOcean/GenomeOcean-4B', # model_dir can also be the path to a local copy of the model
     prompts=sequences, # Provide a list of DNA sequences as prompts
     promptfile='', # or provide a file contains DNA sequences as prompts
     num=10, # number of sequences to generate for each prompt
