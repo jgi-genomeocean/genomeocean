@@ -7,7 +7,6 @@ A Python library for evaluating large genome foundational models.
 ```bash
 conda create -n GO python=3.11
 conda activate GO
-pip install torch==2.4.0
 pip install -r requirements.txt
 pip install .
 ```
