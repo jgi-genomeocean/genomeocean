@@ -5,3 +5,7 @@ __pycache__
 */__pycache__/*
 */*/__pycache__/*
 *.ipynb_checkpoints
+genomeocean.egg-info/dependency_links.txt
+genomeocean.egg-info/PKG-INFO
+genomeocean.egg-info/SOURCES.txt
+genomeocean.egg-info/top_level.txt

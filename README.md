@@ -7,7 +7,6 @@ A Python library for GenomeOcean inference.
 ```bash
 conda create -n GO python=3.11
 conda activate GO
-pip install torch==2.4.0
 pip install -r requirements.txt
 pip install .
 ```
@@ -21,14 +20,14 @@ GenomeOcean is compatible with all the standard HuggingFace APIs. Our implement 
 
 #### 2.1.1 Sequence Generation
 ```python
-from gmeval.generation import SequenceGenerator
+from genomeocean.generation import SequenceGenerator
 
 sequences = [
     "GCCGCTAAAAAGCGACCAGAATGATCCAAAAAAGAAGGCAGGCCAGCACCATCCGTTTTTTACAGCTCCAGAACTTCCTTT", 
     "CAGTCAGTGGCTAGCATGCTAGCATCGATCGATCGATCGATCGATCGATCGATCGGTGCATGCTAGCATCGATCGATCGAA"
 ]
 seq_gen = SequenceGenerator(
-    model_dir='pGenomeOcean/GenomeOcean-4B', 
+    model_dir='pGenomeOcean/GenomeOcean-4B', # model_dir can also be the path to a local copy of the model
     prompts=sequences, # Provide a list of DNA sequences as prompts
     promptfile='', # or provide a file contains DNA sequences as prompts
     num=10, # number of sequences to generate for each prompt
@@ -55,7 +54,7 @@ seq_gen.save_sequences(
 
 #### 2.1.2 Sequence Embedding
 ```python
-from gmeval.llm_utils import LLMUtils
+from genomeocean.llm_utils import LLMUtils
 
 sequences = [
     "GCCGCTAAAAAGCGACCAGAATGATCCAAAAAAGAAGGCAGGCCAGCACCATCCGTTTTTTACAGCTCCAGAACTTCCTTT", 

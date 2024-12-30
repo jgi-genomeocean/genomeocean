@@ -1,7 +1,7 @@
 """ class for sequence generation
 
 Usage:
-    from gmeval.generation import SequenceGenerator
+    from genomeocean.generation import SequenceGenerator
     sequences = [
         "GCCGCTAAAAAGCGACCAGAATGATCCAAAAAAGAAGGCAGGCCAGCACCATCCGTTTTTTACAGCTCCAGAACTTCCTTT", 
         "CAGTCAGTGGCTAGCATGCTAGCATCGATCGATCGATCGATCGATCGATCGATCGGTGCATGCTAGCATCGATCGATCGAA"
