@@ -7,6 +7,8 @@ A Python library for GenomeOcean inference.
 ```bash
 conda create -n GO python=3.11
 conda activate GO
+git clone https://github.com/jgi-genomeocean/genomeocean
+cd genomeocean
 pip install torch==2.4.0 # need to do this first since other packages depend on it
 pip install -r requirements.txt
 pip install .

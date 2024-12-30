@@ -1,27 +1,21 @@
 """Example of embedding sequences using a pre-trained model.
 
 This script demonstrates how to embed sequences using a pre-trained model.
-The script takes as input a model path, a gzipped sequence file with one sequence perline, and a model max length.
-It returns the embeddings of the sequences in the sequence file.
 
+python embedding_sequences.py \
+    --model_path pGenomeOcean/GenomeOcean-4B \
+    --sequence_file ../sample_data/dna_sequences.txt \
+    --model_max_length 1024 \
+    --batch_size 10 \
+    --output_file outputs/embeddings.npy
 
 """
 
-from genomeocean.llm_utils import calculate_llm_embedding
+from genomeocean.llm_utils import LLMUtils
+import os
 import pandas as pd
 import numpy as np
 import argparse
-
-def embeding_sequences(model_path, sequence_file, model_max_length, batch_size=50):
-    dna = pd.read_csv(sequence_file, sep='\t', header=None, compression='gzip')
-    sequences = dna[0].tolist()
-    embeddings = calculate_llm_embedding(
-        sequences, 
-        model_name_or_path=model_path, 
-        model_max_length=model_max_length,
-        batch_size=50 # on A100-40G
-    )
-    return embeddings
 
 def main():
     parser = argparse.ArgumentParser(description='Embedding sequences')
@@ -33,5 +27,21 @@ def main():
     args = parser.parse_args()
     # ensure tat model_max_length does not exceed the model's max length: 10240
     assert args.model_max_length <= 10240
-    embeddings = embeding_sequences(args.model_path, args.sequence_file, args.model_max_length, batch_size=args.batch_size)
+
+    with open(args.sequence_file, "r") as f:
+        sequences = f.read().splitlines()
+    print(f"Get {len(sequences)} sequences from {args.sequence_file} with max length {np.max([len(seq) for seq in sequences])}")
+
+
+    llm = LLMUtils(
+        model_dir=args.model_path, 
+        model_max_length=args.model_max_length,
+    )
+    embeddings = llm.embedding(sequences, batch_size=args.batch_size)
+    
+    print(f"Save embedding to {args.output_file}")
+    os.makedirs(os.path.dirname(args.output_file), exist_ok=True)
     np.save(args.output_file, embeddings)
+
+if __name__ == "__main__":
+    main()

@@ -1,3 +1,5 @@
+examples/outputs
+build/
 .go*
 test_data/*
 slurm*.out
