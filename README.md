@@ -1,6 +1,6 @@
 # GenomeOcean: A metagenomics foundation model
 
-A Python library for evaluating large genome foundational models.
+A Python library for GenomeOcean inference.
 
 ## 1. Installation
 
