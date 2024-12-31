@@ -2,10 +2,11 @@
 scan a genome with a language model to compute per-token scores
 Example usage: 
 ```
-python genomescan.py \
-    --model_dir /path/to/meta_hmp_seq1024 \
-    --genomefile ../../Asp_n/GCF_000149205.2.fa.gz \
-    --out_prefix ../../Asp_n/ASP \
+python scan_genome.py \
+    --model_dir pGenomeOcean/GenomeOcean-4B \
+    --model_max_length 10000 \
+    --genomefile ../sample_data/sample_genomes.fna.gz \
+    --out_prefix outputs/scan/ \
     --out_postfix scores_meta.csv
 ```
 """
@@ -16,11 +17,11 @@ import pandas as pd
 import sys, os
 import argparse
 
-def genomescan(model_dir, genomefile, out_prefix, out_postfix, overlap=500, max_seq_len=10000):
+def genomescan(model_dir, genomefile, out_prefix, out_postfix, overlap=500, model_max_length=10000):
     # allow 500bp overlap between adjacent segments, and limit the maximum sequence length to 10kb
-    wgs = GenomeWideScanUtility(genome_file=genomefile, overlap=overlap, max_seq_len=max_seq_len)
+    wgs = GenomeWideScanUtility(genome_file=genomefile, overlap=overlap, model_max_length=model_max_length)
     wgs.segment_genome(out_prefix=out_prefix)
-    print(f"Genome segmented into segments with max length {wgs.max_seq_len} and overlap {wgs.overlap} in directory {out_prefix}")
+    print(f"Genome segmented into segments with max length {wgs.model_max_length} and overlap {wgs.overlap} in directory {out_prefix}")
 
     # calculate per chromosome scores
     llm = LLMUtils(model_dir=model_dir)
@@ -39,10 +40,10 @@ def genomescan(model_dir, genomefile, out_prefix, out_postfix, overlap=500, max_
         pd.DataFrame(scores).to_csv(output1, index=False, header=False)
         print(f"Scores for chromosome {chrom} written to {output1}")
 
-def main(model_dir, genomefile, out_prefix, out_postfix, overlap=500, max_seq_len=10000):
-    if max_seq_len >=10000:
-        print("Warning: max_seq_len is set to bigger than 10kb, which may exceed the maximum allowed by the model")
-    genomescan(model_dir, genomefile, out_prefix, out_postfix, overlap=overlap, max_seq_len=max_seq_len)
+def main(model_dir, genomefile, out_prefix, out_postfix, overlap=500, model_max_length=10000):
+    if model_max_length > 10000:
+        print("Warning: model_max_length is set to bigger than 10kb, which may exceed the maximum allowed by the model")
+    genomescan(model_dir, genomefile, out_prefix, out_postfix, overlap=overlap, model_max_length=model_max_length)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -51,14 +52,10 @@ if __name__ == '__main__':
     parser.add_argument("--out_prefix", default='./SCAN', help="Output prefix")
     parser.add_argument("--out_postfix", default='scores.csv', help="Output postfix")
     parser.add_argument("--overlap", type=int, default=500, help="Overlap between segments")
-    parser.add_argument("--max_seq_len", type=int, default=10000, help="Max sequence length for each segment")
+    parser.add_argument("--model_max_length", type=int, default=10000, help="Max sequence length for each segment")
     args = parser.parse_args()
-    model_dir = args.model_dir
-    genomefile = args.genomefile
-    out_prefix = args.out_prefix
-    out_postfix = args.out_postfix
-    overlap = args.overlap
-    max_seq_len = args.max_seq_len
      # print out the arguments to standard output
     print(f'Parameters: {args}')   
-    main(model_dir, genomefile, out_prefix, out_postfix, overlap=overlap, max_seq_len=max_seq_len)
+    main(args.model_dir, args.genomefile, args.out_prefix, args.out_postfix, overlap=args.overlap, model_max_length=args.model_max_length)
+
+
