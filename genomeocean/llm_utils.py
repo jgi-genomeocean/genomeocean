@@ -46,7 +46,7 @@ def max_divisor_of_12(number):
 
 # main class
 class LLMUtils:
-    def __init__(self, model_dir, model_max_length=10240):
+    def __init__(self, model_dir, model_max_length=10240, is_classification_model=False):
         self.model_dir = model_dir # model name or path
         self.tokenizer =  transformers.AutoTokenizer.from_pretrained(
                 model_dir,
@@ -56,7 +56,8 @@ class LLMUtils:
                 use_fast=True,
                 trust_remote_code=True,
             )
-        self.model = transformers.AutoModel.from_pretrained(
+        MODEL_CLASS = transformers.AutoModel if not is_classification_model else transformers.AutoModelForSequenceClassification
+        self.model = MODEL_CLASS.from_pretrained(
             model_dir,
             trust_remote_code=True,
             torch_dtype=torch.bfloat16, 
@@ -69,7 +70,7 @@ class LLMUtils:
         self.model_dir = model_dir
 
     
-    def embedding(self, dna_sequences, batch_size=25):
+    def predict(self, dna_sequences, batch_size=25, do_embedding=True):
         """Embedding sequences using the LLM model
         adjust the batch_size according to the GPU memory
         """
@@ -93,21 +94,26 @@ class LLMUtils:
                     )
                 input_ids = token_feat['input_ids'].cuda()
                 attention_mask = token_feat['attention_mask'].cuda()
-                model_output = model.forward(input_ids=input_ids, attention_mask=attention_mask)[0].detach().cpu()
+                model_output = model.forward(input_ids=input_ids, attention_mask=attention_mask, output_hidden_states=True, return_dict=True)
 
-                attention_mask = attention_mask.unsqueeze(-1).detach().cpu()
-                embedding = torch.sum(model_output * attention_mask, dim=1) / torch.sum(attention_mask, dim=1)
+                if do_embedding: # use the last hidden state as the embedding
+                    model_output = model_output.last_hidden_state.detach().cpu()
+                    attention_mask = attention_mask.unsqueeze(-1).detach().cpu()
+                    model_output = torch.sum(model_output * attention_mask, dim=1) / torch.sum(attention_mask, dim=1)
+                else: # take the logits (Used for fine-tuned classification or regression models)
+                    model_output = model_output.logits.detach().cpu()
 
                 if j == 0:
-                    embeddings = embedding
+                    outputs = model_output
                 else:
-                    embeddings = torch.cat((embeddings, embedding), dim=0)
+                    outputs = torch.cat((outputs, model_output), dim=0)
 
-        embeddings = np.array(embeddings.detach().float().cpu())
+        outputs = np.array(outputs.detach().float().cpu())
 
         # reorder the embeddings according to the original order
-        embeddings = embeddings[np.argsort(idx)]
-        return embeddings
+        outputs = outputs[np.argsort(idx)]
+        return outputs
+
 
     def compute_sequence_perplexity(
         self,

@@ -111,9 +111,10 @@ class SequenceGenerator:
         if prepend_prompt_to_output:
             # concatenate prompts to generated sequences, apply to all 
             all_generated['seq'] = all_generated.apply(lambda x: prompts[x.id] + x.seq, axis=1)
-        # remove identical duplicates
-        all_generated = all_generated.drop_duplicates(subset='seq')
+        
         if max_repeats > 0:  # remove those containing mostly simple repeats
+            # remove identical duplicates
+            all_generated = all_generated.drop_duplicates(subset='seq')
             original_len = len(all_generated)
             all_generated['TRF'] = all_generated['seq'].apply(find_tandem_repeats_percentage)
             non_repetitive_sequences = all_generated[all_generated['TRF'] <= max_repeats]
@@ -122,6 +123,7 @@ class SequenceGenerator:
         return all_generated
 
     def save_sequences(self, all_generated, out_prefix='generated', out_format="txt"):
+        print(f"Saving generated sequences to {out_prefix}.{out_format}")
         out_prefix = out_prefix.rstrip("/")
         if "/" in out_prefix:
             out_dir = "/".join(out_prefix.split("/")[:-1])

@@ -64,7 +64,7 @@ sequences = [
     "CAGTCAGTGGCTAGCATGCTAGCATCGATCGATCGATCGATCGATCGATCGATCGGTGCATGCTAGCATCGATCGATCGAA"
 ]
 llm = LLMUtils('pGenomeOcean/GenomeOcean-4B')
-embeddings = llm.embedding(sequences, batch_size=2) # batch_size can be adjusted based on GPU memory and sequence length
+embeddings = llm.predict(sequences, batch_size=2, do_embedding=True) # batch_size can be adjusted based on GPU memory and sequence length
 print(embeddings.shape)  # (2, 3072)
 print(type(embeddings)) # numpy.ndarray
 

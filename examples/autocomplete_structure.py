@@ -14,12 +14,12 @@ python test_chk_structure.py \
     --prompt_end 600 \
     --structure_start 150 \
     --structure_end 500 \
-    --model_dir ~/genomeocean/trained_models/meta_hmp_seq10240/ \
+    --model_dir pGenomeOcean/GenomeOcean-4B \
     --num 100 \
     --min_seq_len 250 \
     --max_seq_len 300 \
     --foldmason_path ~/bin/foldmason \
-    --output_prefix ../test_data/gmp
+    --output_prefix outputs/gmp
 
 # TRAP-like, also explore mutations in the prompt
 python test_chk_structure.py \
@@ -32,12 +32,12 @@ python test_chk_structure.py \
     --mutate_prompt 1 \
     --structure_start 0 \
     --structure_end 341 \
-    --model_dir ~/genomeocean/trained_models/meta_hmp_seq10240/ \
+    --model_dir pGenomeOcean/GenomeOcean-4B \
     --num 200 \
     --min_seq_len 250 \
     --max_seq_len 300 \
     --foldmason_path ~/bin/foldmason \
-    --output_prefix ../test_data/trapl_wt_mutations
+    --output_prefix outputs/trapl_wt_mutations
 
 """
 import pandas as pd
@@ -174,19 +174,9 @@ def main():
     parser.add_argument("--foldmason_path", default='', help="foldmason path")
     parser.add_argument("--output_prefix", default='generated', help="output prefix")
     args = parser.parse_args()
-    gen_id = args.gen_id
-    start = args.start
-    end = args.end
-    prompt_start = args.prompt_start
-    prompt_end = args.prompt_end
-    mutate_prompt = False
-    if args.mutate_prompt == 1:
-        mutate_prompt = True
+    mutate_prompt = True if args.mutate_prompt == 1 else False
 
-    strand = args.strand
-    ref_pdb = args.ref_pdb
-    structure_start = args.structure_start
-    structure_end = args.structure_end
+
     backward = False
     if args.direction == -1:
         backward = True
@@ -196,34 +186,28 @@ def main():
         structure_end = structure_start + 400
         print('The length of the structure prediction is limited to 400.')
         print(f'Structure_end was set to: {structure_end}')
-    model_dir = args.model_dir
-    num = args.num
-    min_seq_len = args.min_seq_len
-    max_seq_len = args.max_seq_len
-    foldmason_path = args.foldmason_path
-    output_prefix = args.output_prefix
     # print out the arguments to standard output
     print(f'Parameters: {args}')
     generated = chk_gen_structure(
-        gen_id, 
-        start, 
-        end, 
-        prompt_start=prompt_start, 
-        prompt_end=prompt_end,
+        gen_id=args.gen_id, 
+        start=args.start, 
+        end=args.end, 
+        prompt_start=args.prompt_start, 
+        prompt_end=args.prompt_end,
         mutate_prompt=mutate_prompt,
-        strand=strand,
+        strand=args.strand,
         backward=backward,
-        ref_pdb=ref_pdb,
-        structure_start=structure_start,
-        structure_end=structure_end,
-        model_dir=model_dir,
-        num=num,
-        min_seq_len=min_seq_len,
-        max_seq_len=max_seq_len,
-        foldmason_path=foldmason_path
+        ref_pdb=args.ref_pdb,
+        structure_start=args.structure_start,
+        structure_end=args.structure_end,
+        model_dir=args.model_dir,
+        num=args.num,
+        min_seq_len=args.min_seq_len,
+        max_seq_len=args.max_seq_len,
+        foldmason_path=args.foldmason_path
     )
     # save the results to a file
-    generated.to_csv(output_prefix + '.csv', sep='\t', index=False)
+    generated.to_csv(args.output_prefix + '.csv', sep='\t', index=False)
 
 if __name__ == '__main__':
     main()

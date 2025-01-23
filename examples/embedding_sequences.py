@@ -22,7 +22,7 @@ def compute_embedding(sequence, model_dir, model_max_length, batch_size):
         model_dir=model_dir, 
         model_max_length=model_max_length,
     )
-    embeddings = llm.embedding(sequence, batch_size=batch_size)
+    embeddings = llm.predict(sequence, batch_size=batch_size, do_embedding=True)
     return embeddings
 
 if __name__ == "__main__":

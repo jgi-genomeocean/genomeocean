@@ -8,6 +8,7 @@ python generate_sequences.py \
     --model_dir pGenomeOcean/GenomeOcean-4B \
     --promptfile ../sample_data/dna_sequences.txt \
     --out_prefix outputs/generated \
+    --out_format fa \
     --num 10 \
     --min_seq_len 100 \
     --max_seq_len 100 \
@@ -48,6 +49,7 @@ def generate_sequences(
             repetition_penalty=1.0,
             seed=123,
             sort_by_orf_length=False,
+            out_format='fa',
             ):
     # generate sequences using a prompt file
     if max_seq_len >10240:
@@ -83,7 +85,7 @@ def generate_sequences(
             seed=seed,
         )
         all_generated = seq_gen.generate_sequences(prepend_prompt_to_output=True, max_repeats=max_repeats)
-    seq_gen.save_sequences(all_generated, out_prefix=out_prefix)
+    seq_gen.save_sequences(all_generated, out_prefix=out_prefix, out_format=out_format)
 
     if sort_by_orf_length:
         # translate the sequences using prodigal
@@ -168,14 +170,12 @@ def generate_sequences_long(
   
 
 
-def main(model_dir, promptfile, out_prefix, num=100, min_seq_len=1024, max_seq_len=10240, max_repeats=0):
-    generate_sequences(model_dir, promptfile, out_prefix, num=num, min_seq_len=min_seq_len, max_seq_len=max_seq_len)
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_dir", help="Directory containing the model")
     parser.add_argument("--promptfile", help="Prompt file in csv or fasta format")
     parser.add_argument("--out_prefix", default='./SCAN', help="Output prefix")
+    parser.add_argument("--out_format", default='fa', help="Output format")
     parser.add_argument("--num", default=100, type=int, help="Number of sequences to generate from each prompt")
     parser.add_argument("--min_seq_len", type=int, default=1024, help="minimum length of generated sequences in token, set it as expected bp length // 4 (e.g., set it as 1000 for 4kb)")
     parser.add_argument("--max_seq_len", type=int, default=10240, help="maximum length of generated sequences in token, max value is 10240")
@@ -186,16 +186,27 @@ if __name__ == '__main__':
     parser.add_argument("--frequency_penalty", type=float, default=0.5, help="frequency penalty for sampling")
     parser.add_argument("--repetition_penalty", type=float, default=1.0, help="repetition penalty for sampling")
     parser.add_argument("--seed", type=int, default=123, help="random seed for sampling")
-    parser.add_argument("--max_repeats", type=int, default=100, help="Maximum percentage of repeats")
+    parser.add_argument("--max_repeats", type=int, default=0, help="Maximum percentage of repeats")
     parser.add_argument("--sort_by_orf_length", action='store_true', help="Sort the sequences by ORF length")
     args = parser.parse_args()
-    model_dir = args.model_dir
-    promptfile = args.promptfile
-    out_prefix = args.out_prefix
-    num = int(args.num)
-    min_seq_len = int(args.min_seq_len)
-    max_seq_len = int(args.max_seq_len)
-    max_repeats = int(args.max_repeats)
+    
     # print out the arguments to standard output
     print(f'Parameters: {args}')
-    main(model_dir, promptfile, out_prefix, num=num, min_seq_len=min_seq_len, max_seq_len=max_seq_len, max_repeats=max_repeats)
+    generate_sequences(
+        model_dir=args.model_dir,
+        promptfile=args.promptfile,
+        out_prefix=args.out_prefix,
+        num=args.num,
+        min_seq_len=args.min_seq_len,
+        max_seq_len=args.max_seq_len,
+        temperature=args.temperature,
+        top_k=args.top_k,
+        top_p=args.top_p,
+        presence_penalty=args.presence_penalty,
+        frequency_penalty=args.frequency_penalty,
+        repetition_penalty=args.repetition_penalty,
+        seed=args.seed,
+        max_repeats=args.max_repeats,
+        sort_by_orf_length=args.sort_by_orf_length,
+        out_format=args.out_format,
+    )
