@@ -1,6 +1,7 @@
-# GenomeOcean: A metagenomics foundation model
+# GenomeOcean: An Efficient Genome Foundation Model Trained on Large-Scale Metagenomic Assemblies
 
-A Python library for GenomeOcean inference.
+![Figure 1](figures/Overview.jpeg)
+
 
 ## 1. Installation
 
@@ -17,7 +18,9 @@ pip install .
 
 ## 2. Usage
 
-GenomeOcean is compatible with all the standard HuggingFace APIs. Our implement further wraps it with vLLM for generation efficiency and quality. 
+GenomeOcean is compatible with all the standard HuggingFace APIs (Publically available on HuggingFace at `pGenomeOcean/GenomeOcean-4B`.). 
+
+Our implement further wraps it with vLLM and some bioinformatics tools for generation efficiency and quality. 
 
 ### 2.1 Our implementation (Recommended)
 
@@ -137,5 +140,4 @@ Please submit pull requests to the main branch.
 ## 4. Citation
 
 ### `LICENSE`
-Choose a suitable license for your library (e.g., MIT, Apache 2.0).
-
+GenomeOcean is under BSD license.
