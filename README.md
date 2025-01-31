@@ -5,6 +5,11 @@
 
 ## 1. Installation
 
+### 1.1 Docker
+We provide a Docker image for GenomeOcean. See `docker/` for more information.
+
+
+### 1.2 Install GenomeOcean locally
 Pre-requisites:
 ```bash
 # Create a new conda environment
@@ -15,7 +20,13 @@ conda activate GO
 pip install torch==2.4.0 # need to do this first since other packages depend on it
 ```
 
-Install GenomeOcean package:
+Install GenomeOcean package
+(Optional 1) Install from pip:
+```bash
+pip install genomeocean
+```
+
+(Optional 2) Install from source:
 ```bash
 # Install GenomeOcean from source
 git clone https://github.com/jgi-genomeocean/genomeocean
@@ -23,6 +34,7 @@ cd genomeocean
 pip install -r requirements.txt
 pip install .
 ```
+
 
 
 ## 2. Usage
