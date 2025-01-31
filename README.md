@@ -21,6 +21,7 @@ pip install torch==2.4.0 # need to do this first since other packages depend on 
 ```
 
 Install GenomeOcean package
+
 (Optional 1) Install from pip:
 ```bash
 pip install genomeocean
