@@ -39,7 +39,7 @@ RUN git clone https://github.com/jgi-genomeocean/genomeocean.git
 WORKDIR /workspace/genomeocean
 
 # Install Python dependencies
-RUN pip install --no-cache-dir torch==2.4.0 
+RUN pip install --no-cache-dir torch==2.5.1 
 
 # Install GenomeOcean
 RUN pip install genomeocean

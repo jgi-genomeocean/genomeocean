@@ -17,7 +17,7 @@ conda create -n GO python=3.11
 conda activate GO
 
 # Install PyTorch
-pip install torch==2.4.0 # need to do this first since other packages depend on it
+pip install torch==2.5.1 # need to do this first since other packages depend on it
 ```
 
 Install GenomeOcean package
