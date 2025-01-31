@@ -1,11 +1,11 @@
 
 """
 Given a partial gene sequence, generate sequences that are likely to fold into a given structure.
-Check the structure of the generated sequences using FoldMason (external program).
+Check the structure of the generated sequences using FoldMason (external program), which can be installed from [here](https://github.com/steineggerlab/foldmason?tab=readme-ov-file#installation)
 The script takes as input a gene id, start and end positions, and the start and end positions of the prompt.
 
 # GMP synthetase
-python examples/autocomplete_structure.py \
+python autocomplete_structure.py \
     --gen_id NZ_JAYXHC010000003.1 \
     --start 157 \
     --end 1698 \
@@ -22,7 +22,7 @@ python examples/autocomplete_structure.py \
     --output_prefix outputs/gmp
 
 # TRAP-like, also explore mutations in the prompt
-python test_chk_structure.py \
+python autocomplete_structure.py \
     --gen_id OY729418.1 \
     --start 1675256 \
     --end 1676176 \
