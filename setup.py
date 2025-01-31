@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='genomeocean',
-    version='0.3.0',
+    version='0.4.0',
     author='Zhong Wang',
     author_email='zhongwang@lbl.gov',
     description='A Python library for GenomeOcean inference and fine-tuning.',
@@ -12,13 +12,13 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         "numpy==1.26.4",
-        "torch==2.5.1",
+        "torch==2.4.0",
         "biopython==1.83",
         "einops==0.7.0",
-        "transformers==4.45.2",
-        "vllm==0.7.0",
+        "transformers==4.44.2",
+        "vllm==0.6.1.post2",
         "flash-attn==2.6.3",
-        "triton==3.1.0",
+        "triton==3.0.0",
         "tqdm==4.66.4",
         "scikit-learn==1.5.0",
         "pyrodigal==3.6.3",
