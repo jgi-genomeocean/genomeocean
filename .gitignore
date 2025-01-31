@@ -1,3 +1,5 @@
+genomeocean.egg-info/
+dist/
 examples/outputs
 build/
 .go*
