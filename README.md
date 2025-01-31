@@ -5,12 +5,21 @@
 
 ## 1. Installation
 
+Pre-requisites:
 ```bash
+# Create a new conda environment
 conda create -n GO python=3.11
 conda activate GO
+
+# Install PyTorch
+pip install torch==2.4.0 # need to do this first since other packages depend on it
+```
+
+Install GenomeOcean package:
+```bash
+# Install GenomeOcean from source
 git clone https://github.com/jgi-genomeocean/genomeocean
 cd genomeocean
-pip install torch==2.4.0 # need to do this first since other packages depend on it
 pip install -r requirements.txt
 pip install .
 ```
@@ -18,7 +27,17 @@ pip install .
 
 ## 2. Usage
 
-GenomeOcean is compatible with all the standard HuggingFace APIs (Publically available on HuggingFace at `pGenomeOcean/GenomeOcean-4B`.). 
+GenomeOcean is compatible with all the standard HuggingFace APIs. We publish the following checkpoints on HuggingFace:
+
+
+
+| Checkpoint                                   | Description                                                  |
+| -------------------------------------------- | ------------------------------------------------------------ |
+| pGenomeOcean/GenomeOcean-4B                  | The base model with 4B parameters. Support maximum sequence length of 10240 tokens (~51,000 bp). |
+| pGenomeOcean/GenomeOcean-4B-bgcFM            | The `GenomeOcean-4B` model finetuned on 11M biosynthetic gene clusters (BGC) sequences. Support maximum sequence length of 10240 tokens (~51,000 bp). |
+| pGenomeOcean/GenomeOcean-Artificial-Detector | The `GenomeOcean-4B` model finetuned to detected GenomeOcean-generated sequences. A binary classifier where label `0` indicate artificial sequences. |
+
+
 
 Our implement further wraps it with vLLM and some bioinformatics tools for generation efficiency and quality. 
 
