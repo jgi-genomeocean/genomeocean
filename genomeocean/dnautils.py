@@ -206,3 +206,22 @@ def LDDT_scoring(query, target_pdb, foldmason_path='', debug=False):
     subprocess.run(f'rm -rf {temp_dir} {pdb_dir}', shell=True)
     return score
         
+def introduce_mutations(orf_sequence, mutation_percentage=5, mutation_type='synonymous', codontable=11):
+    codon_table = CodonTable.unambiguous_dna_by_id[codontable]
+    codons = [orf_sequence[i:i+3] for i in range(0, len(orf_sequence), 3)]
+    
+    num_codons_to_mutate = int(len(codons) * mutation_percentage / 100)
+    codons_to_mutate = random.sample(range(len(codons)), num_codons_to_mutate)
+    for index in codons_to_mutate:
+        original_codon = codons[index]
+        amino_acid = codon_table.forward_table.get(original_codon, None)
+        if amino_acid:
+            if mutation_type=='synonymous':
+                candidate_codons = [codon for codon, aa in codon_table.forward_table.items() if aa == amino_acid and codon != original_codon]
+            else:
+                candidate_codons = [codon for codon, aa in codon_table.forward_table.items() if aa != amino_acid]
+            if candidate_codons:
+                codons[index] = random.choice(candidate_codons)
+    
+    mutated_sequence = ''.join(codons)
+    return mutated_sequence
