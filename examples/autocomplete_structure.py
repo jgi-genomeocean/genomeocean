@@ -5,7 +5,7 @@ Check the structure of the generated sequences using FoldMason (external program
 The script takes as input a gene id, start and end positions, and the start and end positions of the prompt.
 
 # GMP synthetase
-python test_chk_structure.py \
+python examples/autocomplete_structure.py \
     --gen_id NZ_JAYXHC010000003.1 \
     --start 157 \
     --end 1698 \

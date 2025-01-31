@@ -13,12 +13,12 @@ python generate_sequences.py \
     --min_seq_len 100 \
     --max_seq_len 100 \
     --temperature 1.3 \
-    --top_k=-1 \
-    --top_p=0.7 \
+    --top_k -1 \
+    --top_p 0.7 \
     --max_repeats 100 \
-    --presence_penalty=0.5 \
-    --frequency_penalty=0.5 \
-    --repetition_penalty=1.0 \
+    --presence_penalty 0.5 \
+    --frequency_penalty 0.5 \
+    --repetition_penalty 1.0 \
     --seed 123 \
     --sort_by_orf_length
 ```

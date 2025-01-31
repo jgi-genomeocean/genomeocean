@@ -1,5 +1,8 @@
 import setuptools
 
+with open("requirements.txt") as f:
+    install_requires = f.read().splitlines()
+
 setuptools.setup(
     name='genomeocean',
     version='0.4.0',
