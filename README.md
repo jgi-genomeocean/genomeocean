@@ -15,7 +15,7 @@ Pre-requisites:
 # Create a new conda environment
 conda create -n GO python=3.11
 conda activate GO
-
+pip install torch==2.4.0
 ```
 
 Install GenomeOcean package
