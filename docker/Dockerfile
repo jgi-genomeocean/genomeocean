@@ -1,5 +1,5 @@
 # Use the CUDA developer base image for Ubuntu 20.04
-FROM nvidia/cuda:12.2.0-devel-ubuntu20.04
+FROM nvidia/cuda:12.4.1-devel-ubuntu22.04
 
 # Set up environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
