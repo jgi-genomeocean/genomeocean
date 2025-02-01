@@ -50,7 +50,7 @@ import subprocess
 
 from genomeocean.dnautils import get_nuc_seq_by_id, introduce_mutations
 from genomeocean.generation import SequenceGenerator
-from generate_sequences.dnautils import fasta2pdb_api, reverse_complement, LDDT_scoring
+from genomeocean.dnautils import fasta2pdb_api, reverse_complement, LDDT_scoring
 
 from Bio.Seq import translate
 from Bio.Seq import Seq
@@ -138,7 +138,7 @@ def chk_gen_structure(
         repetition_penalty=1.0, 
         seed=1234
     )
-    g_seqs = seq_gen.generate_sequences(add_prompt=True, max_repeats=100)
+    g_seqs = seq_gen.generate_sequences(prepend_prompt_to_output=True, max_repeats=100)
     print(f'total {g_seqs.shape[0]} sequences were generated.')  
     os.remove('tmp_prompts.csv')
 
@@ -182,10 +182,10 @@ def main():
         backward = True
         print('Generating sequences in the reverse direction.')
     # max length of the structure prediction is limited to 400
-    if structure_end - structure_start > 400:
-        structure_end = structure_start + 400
+    if args.structure_end - args.structure_start > 400:
+        args.structure_end = args.structure_start + 400
         print('The length of the structure prediction is limited to 400.')
-        print(f'Structure_end was set to: {structure_end}')
+        print(f'Structure_end was set to: {args.structure_end}')
     # print out the arguments to standard output
     print(f'Parameters: {args}')
     generated = chk_gen_structure(

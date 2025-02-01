@@ -8,6 +8,7 @@ import requests
 from Bio.Seq import Seq
 from Bio import Entrez, SeqIO
 from Bio.SeqRecord import SeqRecord
+from Bio.Data import CodonTable
 import subprocess
 import os
 
