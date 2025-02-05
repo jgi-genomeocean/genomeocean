@@ -1,4 +1,4 @@
-# GenomeOcean: An Efficient Genome Foundation Model Trained on Large-Scale Metagenomic Assemblies
+# [GenomeOcean: An Efficient Genome Foundation Model Trained on Large-Scale Metagenomic Assemblies](https://www.biorxiv.org/content/10.1101/2025.01.30.635558v1)
 
 ![Figure 1](figures/Overview.jpeg)
 
