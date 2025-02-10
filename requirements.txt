@@ -12,4 +12,3 @@ scikit-learn==1.5.0
 pyrodigal==3.6.3
 peft==0.14.0
 wandb==0.19.4
-

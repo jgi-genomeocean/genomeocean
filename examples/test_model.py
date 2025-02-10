@@ -1,5 +1,8 @@
+# Check if the model works correctly by embedding sequences and generating new sequences
+
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModel, AutoModelForCausalLM, AutoTokenizer
+
 
 # Step 1: Load the tokenizer
 tokenizer = AutoTokenizer.from_pretrained(
@@ -9,7 +12,7 @@ tokenizer = AutoTokenizer.from_pretrained(
 )
 
 # Step 2: Load the model
-model = AutoModelForCausalLM.from_pretrained(
+model = AutoModel.from_pretrained(
     "pGenomeOcean/GenomeOcean-4B",
     trust_remote_code=True,
     torch_dtype=torch.bfloat16,
@@ -37,10 +40,18 @@ attention_mask = attention_mask.unsqueeze(-1).detach().cpu()
 embedding = torch.sum(model_output * attention_mask, dim=1) / torch.sum(attention_mask, dim=1)
 print(f"Embedding Shape: {embedding.shape}")  # Should be (2, 3072)
 
+assert embedding.shape == (2, 3072), "Embedding shape is not (2, 3072), sth. is wrong!"
+
 # Step 4: Sequence generation
 sequence = "GCCGCTAAAAAGCGACCAGAATGATCCAAAAAAGAAGGCAGGCCAGCACCATCCGTTTTTTACAGCTCCAGAACTTCCTTT"
 input_ids = tokenizer(sequence, return_tensors="pt", padding=True)["input_ids"]
 input_ids = input_ids[:, :-1].to("cuda")  # Remove the [SEP] token at the end
+model = AutoModelForCausalLM.from_pretrained(
+    "pGenomeOcean/GenomeOcean-4B",
+    trust_remote_code=True,
+    torch_dtype=torch.bfloat16,
+    attn_implementation="flash_attention_2",
+).to("cuda")
 model_output = model.generate(
     input_ids=input_ids,
     min_new_tokens=10,
@@ -52,3 +63,5 @@ model_output = model.generate(
 )
 generated = tokenizer.decode(model_output[0]).replace(" ", "")[5+len(sequence):]
 print(f"Generated sequence: {generated}")
+
+assert len(generated) >= 10, "Generated sequence length is too short, sth. is wrong!"
