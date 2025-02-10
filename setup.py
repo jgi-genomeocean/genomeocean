@@ -5,7 +5,7 @@ with open("requirements.txt") as f:
 
 setuptools.setup(
     name='genomeocean',
-    version='0.4.0',
+    version='0.5.0',
     author='Zhong Wang',
     author_email='zhongwang@lbl.gov',
     description='A Python library for GenomeOcean inference and fine-tuning.',
