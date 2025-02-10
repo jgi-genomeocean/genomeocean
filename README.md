@@ -36,11 +36,11 @@ GenomeOcean is compatible with all the standard HuggingFace APIs. We publish the
 
 | Checkpoint                                   | Description                                                  |
 | -------------------------------------------- | ------------------------------------------------------------ |
-| pGenomeOcean/GenomeOcean-100M                  | The base model with 100M parameters. Support maximum sequence length of 1024 tokens (~5,100 bp). |
-| pGenomeOcean/GenomeOcean-500M                  | The base model with 500M parameters. Support maximum sequence length of 1024 tokens (~5,100 bp). |
-| pGenomeOcean/GenomeOcean-4B                    | The base model with 4B parameters. Support maximum sequence length of 10240 tokens (~51,000 bp). |
-| pGenomeOcean/GenomeOcean-4B-bgcFM              | The `GenomeOcean-4B` model finetuned on 11M biosynthetic gene clusters (BGC) sequences. Support maximum sequence length of 10240 tokens (~51,000 bp). |
-| pGenomeOcean/GenomeOcean-Artificial-Detector   | The `GenomeOcean-4B` model finetuned to detected GenomeOcean-generated sequences. A binary classifier where label `0` indicate artificial sequences. |
+| [pGenomeOcean/GenomeOcean-100M](https://huggingface.co/pGenomeOcean/GenomeOcean-100M)                  | The base model with 100M parameters. Support maximum sequence length of 1024 tokens (~5,100 bp). |
+| [pGenomeOcean/GenomeOcean-500M](https://huggingface.co/pGenomeOcean/GenomeOcean-500M)                  | The base model with 500M parameters. Support maximum sequence length of 1024 tokens (~5,100 bp). |
+| [pGenomeOcean/GenomeOcean-4B](https://huggingface.co/pGenomeOcean/GenomeOcean-4B)                    | The base model with 4B parameters. Support maximum sequence length of 10240 tokens (~51,000 bp). |
+| [pGenomeOcean/GenomeOcean-4B-bgcFM](https://huggingface.co/pGenomeOcean/GenomeOcean-4B-bgcFM)             | The `GenomeOcean-4B` model finetuned on 11M biosynthetic gene clusters (BGC) sequences. Support maximum sequence length of 10240 tokens (~51,000 bp). |
+| [pGenomeOcean/GenomeOcean-4B-Artificial-Detector](https://huggingface.co/pGenomeOcean/GenomeOcean-4B-Artificial-Detector)   | The `GenomeOcean-4B` model finetuned to detected GenomeOcean-generated sequences. A binary classifier where label `0` indicate artificial sequences. |
 
 We recommend using the `GenomeOcean-4B` model for general-purpose genome sequence analysis. The `GenomeOcean-4B-bgcFM` model is fine-tuned on BGC sequences and can be used for BGC-related tasks. The smaller models (`GenomeOcean-100M` and `GenomeOcean-500M`) can be used when GPU memory is limited, but the performance may be largely compromised.
 
