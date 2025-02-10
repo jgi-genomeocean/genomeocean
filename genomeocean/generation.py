@@ -87,13 +87,27 @@ class SequenceGenerator:
             return list(pd.read_csv(self.promptfile, header=None, delimiter="\t" if self.promptfile.endswith('.tsv') else None)[0])
 
 
+    def _print_generate_parameters(self):
+        print("Parameters used for sequence generation:")
+        print(f"Number of generations from each prompt: {self.num}")
+        print(f"Temperature: {self.temperature}")
+        print(f"Minimum length of generated tokens: {self.min_seq_len}")
+        print(f"Maximum length of generated tokens: {self.max_seq_len}")
+        print(f"Top-k sampling: {self.top_k}")
+        print(f"Top-p sampling: {self.top_p}")
+        print(f"Presence penalty: {self.presence_penalty}")
+        print(f"Frequency penalty: {self.frequency_penalty}")
+        print(f"Repetition penalty: {self.repetition_penalty}")
+        print(f"Seed: {self.seed}")
 
+    
     def generate_sequences(self, prepend_prompt_to_output=False, max_repeats=0):
         prompts = self._load_prompts()
         llm = LLMUtils(model_dir=self.model_dir)
         
         print(f"======First Prompt {prompts[0]}")
-        generated = llm.generate(        
+        self._print_generate_parameters()
+        generated = llm.generate(
             prompts=prompts, 
             num_generation_from_each_prompt=self.num,
             temperature=self.temperature,
