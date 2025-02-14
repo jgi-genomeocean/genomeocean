@@ -140,7 +140,8 @@ class LLMUtils:
         
         perplexities = np.zeros(len(dna_sequences))
 
-        for i, sample in tqdm.tqdm(enumerate(encodings["input_ids"])):
+        print("using model: {}".format(self.model_dir))
+        for i, sample in tqdm.tqdm(list(enumerate(encodings["input_ids"])), desc="calculating losses"):
             nlls = []
             prev_end_loc = 0
             sample = torch.tensor(sample).unsqueeze(0)
@@ -193,7 +194,8 @@ class LLMUtils:
         
         all_losses = []
         
-        for i, sample in tqdm.tqdm(enumerate(encodings["input_ids"])):
+        print("using model: {}".format(self.model_dir))
+        for i, sample in tqdm.tqdm(list(enumerate(encodings["input_ids"])), desc="calculating losses"):
             losses = []
             sample = torch.tensor(sample).unsqueeze(0)
             seq_len = sample.size(1)

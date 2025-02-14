@@ -14,7 +14,8 @@ setuptools.setup(
     url="https://github.com/jgi-genomeocean/genomeocean",
     packages=setuptools.find_packages(),
     scripts=[
-        "go_generate.py"
+        "go_generate.py",
+        "go_scan.py"
     ],
     install_requires=install_requires,
     classifiers=[
