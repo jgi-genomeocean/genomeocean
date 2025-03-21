@@ -1,8 +1,5 @@
 import setuptools
 
-with open("requirements.txt") as f:
-    install_requires = f.read().splitlines()
-
 setuptools.setup(
     name='genomeocean',
     version='0.5.0',
@@ -17,7 +14,6 @@ setuptools.setup(
         "go_generate.py",
         "go_scan.py"
     ],
-    install_requires=install_requires,
     classifiers=[
         'Programming Language :: Python :: 3.8', 
         'Programming Language :: Python :: 3.9',
