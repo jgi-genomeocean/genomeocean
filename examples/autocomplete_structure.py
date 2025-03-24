@@ -150,6 +150,8 @@ def chk_gen_structure(
     g_seqs['length'] = g_seqs['seq'].apply(lambda x: len(x))
     g_seqs = g_seqs[g_seqs['orf_len']>=len(gene)-100].copy()
     print(f'total {g_seqs.shape[0]} sequences has longer ORFs than the original-100.')
+    # save the sequences to a file
+    g_seqs.to_csv('tmp_generated.csv')
     g_seqs['lddt_score'] = g_seqs['protein'].apply(lambda x: LDDT_scoring(x[structure_start:structure_end], ref_pdb, foldmason_path=foldmason_path))
     os.remove('ref_tmp.pdb')
     return g_seqs

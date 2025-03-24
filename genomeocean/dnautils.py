@@ -10,7 +10,7 @@ from Bio import Entrez, SeqIO
 from Bio.SeqRecord import SeqRecord
 from Bio.Data import CodonTable
 import subprocess
-import os
+import os, sys
 
 
 def get_nuc_seq_by_id(uid, start=0, end=0, db='nuccore'):
@@ -173,6 +173,11 @@ def fasta2pdb_api(seq, outfile):
     # use subprocess to run curl command
     cmd = f'curl -X POST --data "{seq}" https://api.esmatlas.com/foldSequence/v1/pdb/ > {outfile} 2>/dev/null'
     subprocess.run(cmd, shell=True) 
+    # check if query is successful, outfile should have non-zero size
+    if os.path.exists(outfile) and os.path.getsize(outfile) > 0:
+        return True
+    else:
+        raise Exception("Error in cmd '{cmd}': failed to generate pdb file")
     
 def LDDT_scoring(query, target_pdb, foldmason_path='', debug=False):
 
@@ -194,8 +199,13 @@ def LDDT_scoring(query, target_pdb, foldmason_path='', debug=False):
     fasta2pdb_api(query, pdb_dir+'query.pdb')
     subprocess.run(['cp', target_pdb, pdb_dir])
     cmd = f'{foldmason_path} easy-msa {pdb_dir} results.m8 {temp_dir} --match-ratio 0.51 --filter-msa 1 --gap-open aa:10,nucl:10 --gap-extend aa:1,nucl:1 --report-paths 0 --report-mode 2'
-    # run the command and capture the results
-    results = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE) 
+    # run the command and capture the results, check if the command is successful
+    try:
+        results = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error: {e}")
+        return None
+    
     subprocess.run('rm -rf tmp/ pdbs/ results.m8*', shell=True)
     score = 0.0
     for l in results.stdout.decode().split('\n'):
