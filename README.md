@@ -16,7 +16,7 @@ We provide a Docker image for GenomeOcean. See `docker/` for more information.
 # Create a new conda environment
 conda create -n GO python=3.11
 conda activate GO
-pip install torch==2.4.0
+conda install pytorch==2.4.0 torchvision torchaudio -c pytorch
 ```
 
 #### Install GenomeOcean package
@@ -29,6 +29,15 @@ pip install genomeocean
 from source:
 ```bash
 pip install git+https://github.com/jgi-genomeocean/genomeocean
+```
+
+Test isntallation:
+```bash
+# clone the repo
+git clone https://github.com/jgi-genomeocean/genomeocean
+# make sure the installation works
+cd genomeocean
+python examples/test_model.py
 ```
 
 ## 2. Usage
