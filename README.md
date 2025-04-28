@@ -17,7 +17,7 @@ We provide a Docker image for GenomeOcean. See `docker/` for more information.
 uv venv GO --python 3.11
 source GO/bin/activate
 # install required packages
-# You may need $CUDA_HOME set to compile flash-attn 
+# You may need $CUDA_HOME set to compile flash-attn. Note nvcc==12.4 on NERSC works, but nvcc==12.6 on LRC doesn't work.
 uv pip install transformers[torch]==4.51.3
 # change the number of jobs as needed
 MAX_JOBS=16 uv pip install --no-build-isolation flash-attn==2.7.4.post1
@@ -25,11 +25,6 @@ MAX_JOBS=16 uv pip install --no-build-isolation flash-attn==2.7.4.post1
 ```
 
 #### Install GenomeOcean package
-
-from pip:
-```bash
-uv pip install genomeocean@update-torch-vllm
-```
 
 from source:
 ```bash

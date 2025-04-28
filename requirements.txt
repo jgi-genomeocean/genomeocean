@@ -303,6 +303,8 @@ pillow==11.2.1
     #   mistral-common
     #   torchvision
     #   vllm
+prodigal==1.0.2
+    # via -r requirements.in
 prometheus-client==0.21.1
     # via
     #   prometheus-fastapi-instrumentator
