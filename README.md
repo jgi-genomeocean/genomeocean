@@ -13,10 +13,12 @@ We provide a Docker image for GenomeOcean. See `docker/` for more information.
 
 #### Pre-requisites: Python 3.11 tested
 ```bash
-# Create a new conda environment
-conda create -n GO python=3.11
-conda activate GO
-conda install pytorch==2.4.0 torchvision torchaudio -c pytorch
+# Create a new virtual environment
+uv venv --python 3.11
+source GO/bin/activate
+# install required packages
+uv pip install --no-build-isolation flash-attn==2.7.4.post1
+
 ```
 
 #### Install GenomeOcean package
