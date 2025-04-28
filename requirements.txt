@@ -147,6 +147,8 @@ jinja2==3.1.6
     #   torch
 jiter==0.9.0
     # via openai
+joblib==1.4.2
+    # via scikit-learn
 jsonschema==4.23.0
     # via
     #   mistral-common
@@ -204,6 +206,7 @@ numpy==2.2.5
     #   opencv-python-headless
     #   outlines
     #   pandas
+    #   scikit-learn
     #   scipy
     #   torchvision
     #   transformers
@@ -395,8 +398,12 @@ safetensors==0.5.3
     # via
     #   accelerate
     #   transformers
+scikit-learn==1.6.1
+    # via -r requirements.in
 scipy==1.15.2
-    # via vllm
+    # via
+    #   scikit-learn
+    #   vllm
 sentencepiece==0.2.0
     # via
     #   gguf
@@ -417,6 +424,8 @@ starlette==0.46.2
     #   prometheus-fastapi-instrumentator
 sympy==1.13.1
     # via torch
+threadpoolctl==3.6.0
+    # via scikit-learn
 tiktoken==0.9.0
     # via
     #   mistral-common

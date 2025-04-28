@@ -2,3 +2,4 @@ transformers[torch]==4.51.3
 pandas==2.2.3
 vllm==0.8.4
 biopython==1.85
+scikit-learn==1.6.1

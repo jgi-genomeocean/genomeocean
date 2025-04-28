@@ -19,7 +19,8 @@ source GO/bin/activate
 # install required packages
 # You may need $CUDA_HOME set to compile flash-attn 
 uv pip install transformers[torch]==4.51.3
-uv pip install --no-build-isolation flash-attn==2.7.4.post1
+# change the number of jobs as needed
+MAX_JOBS=16 uv pip install --no-build-isolation flash-attn==2.7.4.post1
 
 ```
 
@@ -41,8 +42,36 @@ Test installation:
 # clone the repo
 git clone https://github.com/jgi-genomeocean/genomeocean
 # make sure the installation works
-cd genomeocean
-python examples/test_model.py
+cd genomeocean/examples
+# test embedding:
+python embedding_sequences.py \
+    --model_dir pGenomeOcean/GenomeOcean-4B \
+    --sequence_file ../sample_data/dna_sequences.txt \
+    --model_max_length 1024 \
+    --batch_size 10 \
+    --output_file outputs/embeddings.npy
+
+# test generation
+export VLLM_WORKER_MULTIPROC_METHOD=spawn
+# disable vllm v1 engine, as custom logits processors has not yet been implemented: https://github.com/vllm-project/vllm/issues/15636
+export VLLM_USE_V1=0
+python generate_sequences.py \
+    --model_dir pGenomeOcean/GenomeOcean-4B \
+    --promptfile ../sample_data/dna_sequences.txt \
+    --out_prefix outputs/generated \
+    --out_format fa \
+    --num 10 \
+    --min_seq_len 100 \
+    --max_seq_len 100 \
+    --temperature 1.3 \
+    --top_k -1 \
+    --top_p 0.7 \
+    --max_repeats 100 \
+    --presence_penalty 0.5 \
+    --frequency_penalty 0.5 \
+    --repetition_penalty 1.0 \
+    --seed 123 \
+    --sort_by_orf_length
 ```
 
 ## 2. Usage
