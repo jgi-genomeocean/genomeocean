@@ -9,14 +9,16 @@
 We provide a Docker image for GenomeOcean. See `docker/` for more information.
 
 
-### 1.2 Conda/pip
+### 1.2 uv
 
-#### Pre-requisites: Python 3.11 tested
+#### Pre-requisites: Python 3.11 (tested)
 ```bash
 # Create a new virtual environment
-uv venv --python 3.11
+uv venv GO --python 3.11
 source GO/bin/activate
 # install required packages
+# You may need $CUDA_HOME set to compile flash-attn 
+uv pip install transformers[torch]==4.51.3
 uv pip install --no-build-isolation flash-attn==2.7.4.post1
 
 ```
@@ -25,15 +27,16 @@ uv pip install --no-build-isolation flash-attn==2.7.4.post1
 
 from pip:
 ```bash
-pip install genomeocean
+uv pip install genomeocean@update-torch-vllm
 ```
 
 from source:
 ```bash
-pip install git+https://github.com/jgi-genomeocean/genomeocean
+uv pip install -r requirements.txt
+uv pip install git+https://github.com/jgi-genomeocean/genomeocean@update-torch-vllm
 ```
 
-Test isntallation:
+Test installation:
 ```bash
 # clone the repo
 git clone https://github.com/jgi-genomeocean/genomeocean
