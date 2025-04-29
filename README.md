@@ -22,8 +22,7 @@ uv pip install transformers[torch]==4.51.3
 # install flash-attn, will take a long time if not previously compiled
 MAX_JOBS=4 uv pip install --no-deps flash_attn-2.7.4.post1
 # alternatively, it may be possible install flash-attn without the lengthy and buggy compiling, look through the long list at https://github.com/Dao-AILab/flash-attention/releases/ for the version fits your cuda, torch, cpython and linux versions, e.g.
-wget https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.4.post1/flash_attn-2.7
-.4.post1+cu12torch2.6cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
+wget https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.4.post1/flash_attn-2.7.4.post1+cu12torch2.6cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
 uv pip install --no-deps --upgrade flash_attn-2.7.4.post1+cu12torch2.6cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
 ```
 
