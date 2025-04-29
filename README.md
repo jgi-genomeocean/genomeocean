@@ -19,9 +19,12 @@ source GO/bin/activate
 # install required packages
 # You may need $CUDA_HOME set to compile flash-attn. Note nvcc==12.4 on NERSC works, but nvcc==12.6 on LRC doesn't work.
 uv pip install transformers[torch]==4.51.3
-# change the number of jobs as needed
-MAX_JOBS=16 uv pip install --no-build-isolation flash-attn==2.7.4.post1
-
+# install flash-attn, will take a long time if not previously compiled
+MAX_JOBS=4 uv pip install --no-deps flash_attn-2.7.4.post1
+# alternatively, it may be possible install flash-attn without the lengthy and buggy compiling, look through the long list at https://github.com/Dao-AILab/flash-attention/releases/ for the version fits your cuda, torch, cpython and linux versions, e.g.
+wget https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.4.post1/flash_attn-2.7
+.4.post1+cu12torch2.6cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
+uv pip install --no-deps --upgrade flash_attn-2.7.4.post1+cu12torch2.6cxx11abiFALSE-cp311-cp311-linux_x86_64.whl
 ```
 
 #### Install GenomeOcean package
