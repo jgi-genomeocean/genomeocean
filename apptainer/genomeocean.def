@@ -5,14 +5,13 @@ From: nvidia/cuda:12.4.1-devel-ubuntu22.04
     export DEBIAN_FRONTEND=noninteractive
     export PYTHONDONTWRITEBYTECODE=1
     export PYTHONUNBUFFERED=1
-    export PATH="/opt/conda/bin:$PATH"
     export CUDA_HOME="/usr/local/cuda"
+    export VLLM_WORKER_MULTIPROC_METHOD=spawn
+    export VLLM_USE_V1=0
     export TRANSFORMERS_CACHE=/workspace/model_cache
-    export CONDA_DEFAULT_ENV=GO
-    export PATH="/opt/conda/envs/GO/bin:$PATH"
 
 %post
-    # Install system dependencies
+    export PATH="/usr/bin:$PATH"
     apt-get update && apt-get install -y --no-install-recommends \
         wget \
         git \
@@ -20,37 +19,26 @@ From: nvidia/cuda:12.4.1-devel-ubuntu22.04
         bzip2 \
         libx11-6 \
         build-essential \
+        python3.11 \
+        python3.11-venv \
+        python3-pip \
         && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-    # Install Miniconda
-    wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh
-    bash /tmp/miniconda.sh -b -p /opt/conda
-    rm /tmp/miniconda.sh
-    /opt/conda/bin/conda init bash
-
-    # Create and activate conda environment and install Python
-    /opt/conda/bin/conda create -n GO python=3.11 -y
-    echo "conda activate GO" >> ~/.bashrc
-    /opt/conda/bin/conda clean -a -y
-
-    # Create workspace directory
-    mkdir -p /workspace
-    
-    # Clone GenomeOcean repository
+    ln -s /usr/bin/python3 /usr/bin/python
+    mkdir /workspace
     cd /workspace
     git clone https://github.com/jgi-genomeocean/genomeocean.git
+    cd genomeocean
+    git checkout update-torch-vllm
     cd /workspace/genomeocean
+    pip install -r requirements.txt  \
+        && pip install --no-build-isolation flash_attn \
+        && pip install git+https://github.com/jgi-genomeocean/genomeocean@update-torch-vllm
 
-    # Install Python dependencies
-    /opt/conda/envs/GO/bin/pip install --no-cache-dir torch==2.4.0
-    
-    # Install GenomeOcean
-    /opt/conda/envs/GO/bin/pip install genomeocean
+%files
+    # Add any necessary files from the host here if needed
 
 %runscript
-    exec /bin/bash "$@"
+    exec /bin/bash
 
 %labels
-    Author Zhong Wang
-    Version 1.0
-    Description GenomeOcean container with CUDA support
+    Maintainer JGI GenomeOcean Team
