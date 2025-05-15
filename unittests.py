@@ -1,3 +1,13 @@
+<<<<<<< HEAD
+=======
+"""
+# Test basic functions of GenomeOcean
+export VLLM_WORKER_MULTIPROC_METHOD=spawn
+export VLLM_USE_V1=0
+python -m unittest unittests.py
+"""
+
+>>>>>>> origin/update-torch-vllm
 import unittest
 from unittest.mock import patch, MagicMock
 import numpy as np
