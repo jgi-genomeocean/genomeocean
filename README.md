@@ -17,7 +17,6 @@ We provide a Docker image for GenomeOcean. See `docker/` for more information.
 uv venv GO --python 3.11
 source GO/bin/activate
 # install required packages
-# You may need $CUDA_HOME set to compile flash-attn. Note nvcc==12.4 on NERSC works, but nvcc==12.6 on LRC doesn't work.
 uv pip install transformers[torch]==4.51.3
 # install flash-attn, will take a long time if not previously compiled
 MAX_JOBS=4 uv pip install --no-build-isolation flash_attn-2.7.4.post1
@@ -31,13 +30,21 @@ MAX_JOBS=4 uv pip install --no-build-isolation flash_attn-2.7.4.post1
 from source:
 ```bash
 uv pip install -r requirements.txt
-uv pip install git+https://github.com/jgi-genomeocean/genomeocean@update-torch-vllm
+uv pip install git+https://github.com/jgi-genomeocean/genomeocean
 ```
 
 Test installation:
 ```bash
 # clone the repo
 git clone https://github.com/jgi-genomeocean/genomeocean
+# run unit tests
+source GO/bin/activate
+cd genomeocean/
+export VLLM_WORKER_MULTIPROC_METHOD=spawn
+# disable vllm v1 engine, as custom logits processors has not yet been implemented: https://github.com/vllm-project/vllm/issues/15636
+export VLLM_USE_V1=0
+python -m unittest unittests.py
+
 # make sure the installation works
 cd genomeocean/examples
 # test embedding:
@@ -49,9 +56,6 @@ python embedding_sequences.py \
     --output_file outputs/embeddings.npy
 
 # test generation
-export VLLM_WORKER_MULTIPROC_METHOD=spawn
-# disable vllm v1 engine, as custom logits processors has not yet been implemented: https://github.com/vllm-project/vllm/issues/15636
-export VLLM_USE_V1=0
 python generate_sequences.py \
     --model_dir pGenomeOcean/GenomeOcean-4B \
     --promptfile ../sample_data/dna_sequences.txt \
