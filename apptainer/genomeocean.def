@@ -32,7 +32,7 @@ From: nvidia/cuda:12.4.1-devel-ubuntu22.04
     cd /workspace/genomeocean
     pip install -r requirements.txt  \
         && pip install --no-build-isolation flash_attn \
-        && pip install git+https://github.com/jgi-genomeocean/genomeocean@update-torch-vllm
+        && pip install git+https://github.com/jgi-genomeocean
 
 %files
     # Add any necessary files from the host here if needed

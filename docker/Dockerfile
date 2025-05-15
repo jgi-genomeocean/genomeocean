@@ -34,7 +34,7 @@ WORKDIR /workspace/genomeocean
 # Install Python dependencies
 RUN pip install -r requirements.txt  \
     && pip install --no-build-isolation flash_attn \
-    && pip install git+https://github.com/jgi-genomeocean/genomeocean@update-torch-vllm
+    && pip install git+https://github.com/jgi-genomeocean
 
 # Set default command
 CMD ["/bin/bash"]
