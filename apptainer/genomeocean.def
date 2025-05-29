@@ -30,8 +30,8 @@ From: nvidia/cuda:12.4.1-devel-ubuntu22.04
     cd genomeocean
     git checkout update-torch-vllm
     cd /workspace/genomeocean
-    pip install -r requirements.txt  \
-        && pip install --no-build-isolation flash_attn \
+    pip install --no-cache-dir -r requirements.txt  \
+        && pip install --no-cache-dir --no-build-isolation flash_attn \
         && pip install git+https://github.com/jgi-genomeocean
 
 %files
