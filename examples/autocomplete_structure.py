@@ -191,9 +191,9 @@ def main():
     parser.add_argument("--num", type=int, default=200, help="number of sequences to generate")
     parser.add_argument("--min_seq_len", type=int, default=250, help="minimum sequence length")
     parser.add_argument("--max_seq_len", type=int, default=300, help="maximum sequence length")
-    parser.add_argument("--foldmason_path", default='', help="foldmason path")
-    parser.add_argument("--reseek_path", default='', help="reseek path")
-    parser.add_argument("--method", default='foldmason', help="structure comparison method: foldmason or reseek")
+    parser.add_argument("--foldmason_path", default='~/bin/foldmason', help="foldmason path")
+    parser.add_argument("--reseek_path", default='~/bin/reseek', help="reseek path")
+    parser.add_argument("--method", default='reseek', help="structure comparison method: foldmason or reseek")
     parser.add_argument("--output_prefix", default='generated', help="output prefix")
     args = parser.parse_args()
     mutate_prompt = True if args.mutate_prompt == 1 else False
@@ -227,7 +227,9 @@ def main():
         num=args.num,
         min_seq_len=args.min_seq_len,
         max_seq_len=args.max_seq_len,
-        foldmason_path=args.foldmason_path
+        foldmason_path=args.foldmason_path,
+        reseek_path=args.reseek_path,
+        method=args.method,
     )
     # save the results to a file
     generated.to_csv(args.output_prefix + '.csv', sep='\t', index=False)
