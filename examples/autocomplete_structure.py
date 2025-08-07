@@ -72,9 +72,10 @@ def get_largest_orf(seq):
     return max(orfs, key=len)
 
 def chk_gen_structure(
-    gen_id, 
-    start, 
-    end, 
+    gen_id=None, 
+    start=0, 
+    end=0, 
+    sequence=None,
     prompt_start=0, 
     prompt_end=0,
     mutate_prompt=False,
@@ -87,10 +88,17 @@ def chk_gen_structure(
     foldmason_path='',
     **kwargs,
 ):
-    gene = get_nuc_seq_by_id(gen_id, start=start, end=end)
-    if gene is None:
-        print(f'Failed to retrieve gene sequence {gen_id} from {start} to {end}')
+    if sequence:
+        gene = sequence
+    elif gen_id:
+        gene = get_nuc_seq_by_id(gen_id, start=start, end=end)
+        if gene is None:
+            print(f'Failed to retrieve gene sequence {gen_id} from {start} to {end}')
+            sys.exit(1)
+    else:
+        print("Either --gen_id or --sequence must be provided.")
         sys.exit(1)
+
     if strand == -1:
         gene=reverse_complement(gene)
     if ref_pdb == '':
@@ -152,13 +160,21 @@ def chk_gen_structure(
     print(f'total {g_seqs.shape[0]} sequences has longer ORFs than the original-100.')
     # save the sequences to a file
     g_seqs.to_csv('tmp_generated.csv')
-    g_seqs['lddt_score'] = g_seqs['protein'].apply(lambda x: LDDT_scoring(x[structure_start:structure_end], ref_pdb, foldmason_path=foldmason_path))
-    os.remove('ref_tmp.pdb')
+    g_seqs['lddt_score'] = g_seqs['protein'].apply(lambda x: LDDT_scoring(
+        x[structure_start:structure_end], 
+        ref_pdb, 
+        foldmason_path=kwargs.get('foldmason_path'), 
+        reseek_path=kwargs.get('reseek_path'),
+        method=kwargs.get('method', 'foldmason')
+    ))
+    if os.path.exists('ref_tmp.pdb'):
+        os.remove('ref_tmp.pdb')
     return g_seqs
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--gen_id", help="Gene id")
+    parser.add_argument("--sequence", help="Raw DNA sequence")
     parser.add_argument("--start", type=int, help="start position")
     parser.add_argument("--end", type=int, help="end position")
     parser.add_argument("--prompt_start", type=int, default=0, help="start position of the prompt")
@@ -174,6 +190,8 @@ def main():
     parser.add_argument("--min_seq_len", type=int, default=250, help="minimum sequence length")
     parser.add_argument("--max_seq_len", type=int, default=300, help="maximum sequence length")
     parser.add_argument("--foldmason_path", default='', help="foldmason path")
+    parser.add_argument("--reseek_path", default='', help="reseek path")
+    parser.add_argument("--method", default='foldmason', help="structure comparison method: foldmason or reseek")
     parser.add_argument("--output_prefix", default='generated', help="output prefix")
     args = parser.parse_args()
     mutate_prompt = True if args.mutate_prompt == 1 else False
@@ -191,7 +209,8 @@ def main():
     # print out the arguments to standard output
     print(f'Parameters: {args}')
     generated = chk_gen_structure(
-        gen_id=args.gen_id, 
+        gen_id=args.gen_id,
+        sequence=args.sequence,
         start=args.start, 
         end=args.end, 
         prompt_start=args.prompt_start, 
@@ -206,7 +225,9 @@ def main():
         num=args.num,
         min_seq_len=args.min_seq_len,
         max_seq_len=args.max_seq_len,
-        foldmason_path=args.foldmason_path
+        foldmason_path=args.foldmason_path,
+        reseek_path=args.reseek_path,
+        method=args.method
     )
     # save the results to a file
     generated.to_csv(args.output_prefix + '.csv', sep='\t', index=False)

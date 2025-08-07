@@ -179,42 +179,72 @@ def fasta2pdb_api(seq, outfile):
     else:
         raise Exception("Error in cmd '{cmd}': failed to generate pdb file")
     
-def LDDT_scoring(query, target_pdb, foldmason_path='', debug=False):
+def LDDT_scoring(query, target_pdb, foldmason_path='', reseek_path='', method='foldmason', debug=False):
 
-    # compute structure alignment score using foldmason
-    # check if foldmason_path is provided and exists
-    if not foldmason_path:
-        print("Foldmason path not provided")
-        return None
-    if not os.path.exists(foldmason_path):
-        print("Foldmason path does not exist")
-        return None
+    # compute structure alignment score using foldmason or reseek
     # create temp directory
     temp_dir = 'lddt_temp/'
     subprocess.run(f'rm -rf {temp_dir} && mkdir -p {temp_dir}', shell=True)
-    pdb_dir = 'lddt_pdbs/'
+    query_pdb = os.path.join(temp_dir, 'query.pdb')
     
-    subprocess.run(f'rm -rf {pdb_dir} && mkdir -p {pdb_dir}', shell=True)
-    # predict structure
-    fasta2pdb_api(query, pdb_dir+'query.pdb')
-    subprocess.run(['cp', target_pdb, pdb_dir])
-    cmd = f'{foldmason_path} easy-msa {pdb_dir} results.m8 {temp_dir} --match-ratio 0.51 --filter-msa 1 --gap-open aa:10,nucl:10 --gap-extend aa:1,nucl:1 --report-paths 0 --report-mode 2'
-    # run the command and capture the results, check if the command is successful
-    try:
-        results = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error: {e}")
-        return None
-    
-    subprocess.run('rm -rf tmp/ pdbs/ results.m8*', shell=True)
-    score = 0.0
-    for l in results.stdout.decode().split('\n'):
-        if 'Average MSA LDDT:' in l:
-            score = float(l.split(':')[1].strip())
-    if debug:
-        return results
+    # predict structure for the query sequence
+    fasta2pdb_api(query, query_pdb)
+
+    if method == 'foldmason':
+        # check if foldmason_path is provided and exists
+        if not foldmason_path:
+            print("Foldmason path not provided")
+            return None
+        if not os.path.exists(foldmason_path):
+            print("Foldmason path does not exist")
+            return None
+        
+        pdb_dir = os.path.join(temp_dir, 'pdbs/')
+        subprocess.run(f'mkdir -p {pdb_dir}', shell=True)
+        subprocess.run(['cp', query_pdb, pdb_dir])
+        subprocess.run(['cp', target_pdb, pdb_dir])
+        
+        cmd = f'{foldmason_path} easy-msa {pdb_dir} {os.path.join(temp_dir, "results.m8")} {os.path.join(temp_dir, "tmp")} --match-ratio 0.51 --filter-msa 1 --gap-open aa:10,nucl:10 --gap-extend aa:1,nucl:1 --report-paths 0 --report-mode 2'
+        try:
+            results = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, check=True)
+            score = 0.0
+            for l in results.stdout.decode().split('\n'):
+                if 'Average MSA LDDT:' in l:
+                    score = float(l.split(':')[1].strip())
+            if debug:
+                return results
+        except subprocess.CalledProcessError as e:
+            print(f"Error running foldmason: {e}")
+            score = None
+
+    elif method == 'reseek':
+        if not reseek_path:
+            print("Reseek path not provided")
+            return None
+        if not os.path.exists(reseek_path):
+            print("Reseek path does not exist")
+            return None
+        
+        aln_file = os.path.join(temp_dir, 'alignment.txt')
+        cmd = f'{reseek_path} -alignpair {query_pdb} -input2 {target_pdb} -aln {aln_file} -columns aq'
+        try:
+            subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if os.path.exists(aln_file):
+                with open(aln_file, 'r') as f:
+                    # The file should contain a single column with the score
+                    scores = [float(line.strip()) for line in f if line.strip()]
+                    score = scores[0] if scores else None
+            else:
+                score = None
+        except subprocess.CalledProcessError as e:
+            print(f"Error running reseek: {e}")
+            score = None
+    else:
+        print("Invalid method specified. Choose 'foldmason' or 'reseek'.")
+        score = None
+
     # remove temp files
-    subprocess.run(f'rm -rf {temp_dir} {pdb_dir}', shell=True)
+    subprocess.run(f'rm -rf {temp_dir}', shell=True)
     return score
         
 def introduce_mutations(orf_sequence, mutation_percentage=5, mutation_type='synonymous', codontable=11):
