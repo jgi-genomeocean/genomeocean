@@ -86,6 +86,8 @@ def chk_gen_structure(
     structure_end=0,
     model_dir='',
     foldmason_path='',
+    reseek_path='',
+    method='foldmason',
     **kwargs,
 ):
     if sequence:
@@ -163,9 +165,9 @@ def chk_gen_structure(
     g_seqs['lddt_score'] = g_seqs['protein'].apply(lambda x: LDDT_scoring(
         x[structure_start:structure_end], 
         ref_pdb, 
-        foldmason_path=kwargs.get('foldmason_path'), 
-        reseek_path=kwargs.get('reseek_path'),
-        method=kwargs.get('method', 'foldmason')
+        foldmason_path=foldmason_path, 
+        reseek_path=reseek_path,
+        method=method
     ))
     if os.path.exists('ref_tmp.pdb'):
         os.remove('ref_tmp.pdb')
@@ -225,9 +227,7 @@ def main():
         num=args.num,
         min_seq_len=args.min_seq_len,
         max_seq_len=args.max_seq_len,
-        foldmason_path=args.foldmason_path,
-        reseek_path=args.reseek_path,
-        method=args.method
+        foldmason_path=args.foldmason_path
     )
     # save the results to a file
     generated.to_csv(args.output_prefix + '.csv', sep='\t', index=False)
