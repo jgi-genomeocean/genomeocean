@@ -227,7 +227,9 @@ def main():
         num=args.num,
         min_seq_len=args.min_seq_len,
         max_seq_len=args.max_seq_len,
-        foldmason_path=args.foldmason_path
+        foldmason_path=args.foldmason_path,
+        reseek_path=args.reseek_path,
+        method=args.method
     )
     # save the results to a file
     generated.to_csv(args.output_prefix + '.csv', sep='\t', index=False)

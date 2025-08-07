@@ -230,14 +230,16 @@ def LDDT_scoring(query, target_pdb, foldmason_path='', reseek_path='', method='f
         try:
             subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             if os.path.exists(aln_file):
+                score = None
                 with open(aln_file, 'r') as f:
-                    # The file should contain a single column with the score
-                    scores = [float(line.strip()) for line in f if line.strip()]
-                    score = scores[0] if scores else None
+                    for line in f:
+                        if line.strip().startswith('AQ'):
+                            score = float(line.strip().split()[1].split(',')[0])
+                            break
             else:
                 score = None
         except subprocess.CalledProcessError as e:
-            print(f"Error running reseek: {e}")
+            print(f"Error running reseek: {e.stderr.decode()}")
             score = None
     else:
         print("Invalid method specified. Choose 'foldmason' or 'reseek'.")
