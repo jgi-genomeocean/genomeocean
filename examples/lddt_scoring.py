@@ -139,7 +139,7 @@ def main():
     # 4. Score the sequences in parallel
     scores = LDDT_scoring_parallel(
         queries=trimmed_queries,
-        ref_pdb=ref_pdb_path,
+        target_pdb=ref_pdb_path,
         foldmason_path=args.foldmason_path,
         method='foldmason',
         max_workers=args.max_workers
