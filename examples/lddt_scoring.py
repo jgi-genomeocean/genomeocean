@@ -1,72 +1,154 @@
+"""
+This script, the second in a two-part pipeline, scores generated protein sequences 
+against a reference structure. It takes a CSV file of generated sequences (produced by 
+1_generate_for_structure.py) and a reference gene. 
+
+The script first creates a reference PDB structure from the gene sequence. Then, it uses 
+FoldMason to calculate the lDDT score for each generated protein sequence against the 
+reference PDB. The final output is a CSV file with the original data and the new lDDT scores.
+
+Example usage:
+
+# Score the generated sequences for GMP synthetase
+python lddt_scoring.py \
+    --generated_seqs_csv outputs/gmp.csv \
+    --gen_id NZ_JAYXHC010000003.1 \
+    --start 157 \
+    --end 1698 \
+    --strand -1 \
+    --structure_start 150 \
+    --structure_end 500 \
+    --foldmason_path ~/bin/foldmason \
+    --output_prefix outputs/gmp
+
+# Score the generated sequences for the TRAP-like protein
+python lddt_scoring.py \
+    --generated_seqs_csv outputs/trapl_wt_mutations.csv \
+    --gen_id OY729418.1 \
+    --start 1675256 \
+    --end 1676176 \
+    --strand -1 \
+    --structure_start 0 \
+    --structure_end 341 \
+    --foldmason_path ~/bin/foldmason \
+    --output_prefix outputs/trapl_wt_mutations
+"""
 import pandas as pd
-import numpy as np
 import os
 import sys
 import argparse
-import requests
-import subprocess
-from genomeocean.dnautils import LDDT_scoring_parallel
+from Bio.Seq import Seq, translate
 
-def score_generated_sequences_parallel(queries, ref_pdb, foldmason_path='', max_workers=None):
+from genomeocean.dnautils import LDDT_scoring_parallel, get_nuc_seq_by_id, reverse_complement, fasta2pdb_api
+
+def get_reference_pdb(
+    output_pdb_path,
+    gen_id=None,
+    sequence=None,
+    start=0,
+    end=0,
+    strand=1,
+    structure_start=0,
+    structure_end=None
+):
     """
-    Score a list of protein sequences against a reference PDB structure in parallel.
-
-    Args:
-        queries (list): A list of protein sequences.
-        ref_pdb (str): Path to the reference PDB file.
-        foldmason_path (str): Path to the foldmason executable.
-        max_workers (int): Maximum number of threads for parallel execution.
-
-    Returns:
-        A dictionary with sequences as keys and their lDDT scores as values.
+    Creates a reference PDB file from a gene sequence.
     """
-    scores = LDDT_scoring_parallel(
-        queries,
-        ref_pdb,
-        foldmason_path=foldmason_path,
-        method='foldmason',
-        max_workers=max_workers
-    )
-    return scores
+    if os.path.exists(output_pdb_path):
+        print(f'PDB file {output_pdb_path} already exists, using it as reference.')
+        return
+
+    if sequence:
+        gene = sequence
+    elif gen_id:
+        gene = get_nuc_seq_by_id(gen_id, start=start, end=end)
+        if gene is None:
+            print(f'Failed to retrieve gene sequence {gen_id} from {start} to {end}')
+            sys.exit(1)
+    else:
+        print("Either --gen_id or --sequence must be provided for the reference gene.")
+        sys.exit(1)
+
+    if strand == -1:
+        gene = reverse_complement(gene)
+
+    protein_sequence = translate(Seq(gene), to_stop=True)
+    
+    if structure_end is None:
+        structure_end = len(protein_sequence)
+        
+    structure_segment = protein_sequence[structure_start:structure_end]
+
+    if not structure_segment:
+        print("Error: The specified structure segment is empty.")
+        sys.exit(1)
+        
+    fasta2pdb_api(structure_segment, output_pdb_path)
+    print(f"Reference PDB file created at {output_pdb_path}")
 
 def main():
-    parser = argparse.ArgumentParser(description="Score protein sequences against a reference PDB structure using FoldMason.")
-    parser.add_argument("--generated_seqs_csv", help="CSV file with a 'protein' column containing sequences to score.")
-    parser.add_argument("--ref_pdb", required=True, help="Reference PDB file.")
-    parser.add_argument("--structure_start", type=int, default=0, help="Start position of the structure to be scored.")
-    parser.add_argument("--structure_end", type=int, help="End position of the structure. If not provided, scores the full length.")
+    parser = argparse.ArgumentParser(description="Score protein sequences against a reference PDB structure.")
+    
+    # Arguments for input and output files
+    parser.add_argument("--generated_seqs_csv", required=True, help="CSV file with a 'protein' column containing sequences to score.")
+    parser.add_argument("--output_prefix", required=True, help="Prefix for the output files (including the scores CSV and the reference PDB).")
+
+    # Arguments for defining the reference gene and structure
+    parser.add_argument("--gen_id", help="Gene ID for the reference sequence.")
+    parser.add_argument("--sequence", help="Raw DNA sequence for the reference.")
+    parser.add_argument("--start", type=int, default=0, help="Start position for fetching the gene sequence.")
+    parser.add_argument("--end", type=int, default=0, help="End position for fetching the gene sequence.")
+    parser.add_argument("--strand", type=int, default=1, help="Strand of the gene (1 for forward, -1 for reverse).")
+    parser.add_argument("--structure_start", type=int, default=0, help="Start position of the protein structure to be scored.")
+    parser.add_argument("--structure_end", type=int, help="End position of the protein structure. If not provided, scores the full length.")
+
+    # Arguments for the scoring tool
     parser.add_argument("--foldmason_path", required=True, help="Path to the FoldMason executable.")
-    parser.add_argument("--output_prefix", default='generated', help="Output prefix for the results file.")
-    parser.add_argument("--max_workers", type=int, default=None, help="Maximum number of parallel workers.")
+    parser.add_argument("--max_workers", type=int, default=None, help="Maximum number of parallel workers for scoring.")
+    
     args = parser.parse_args()
 
-    # Define a default list of sequences for demonstration
-    sample_queries = [
-        "MKLFWLLFTIGLCVSAQYGDVLENAEQGDFATDDYKDDDDKSPAGS",
-        "MKLFWLLFTIGLCVSAQYGDVLENAEQGDFATDDYKDDDDKSPAGS",
-        "MKLFWLLFTIGLCVSAQYGDVLENAEQGDFATDDYKDDDDKSPAGS",
-    ]
+    ref_pdb_path = args.output_prefix + '_ref.pdb'
 
-    if args.generated_seqs_csv:
-        g_seqs_df = pd.read_csv(args.generated_seqs_csv)
+    # 1. Create the reference PDB file
+    get_reference_pdb(
+        output_pdb_path=ref_pdb_path,
+        gen_id=args.gen_id,
+        sequence=args.sequence,
+        start=args.start,
+        end=args.end,
+        strand=args.strand,
+        structure_start=args.structure_start,
+        structure_end=args.structure_end
+    )
+
+    # 2. Load the generated sequences
+    try:
+        g_seqs_df = pd.read_csv(args.generated_seqs_csv, sep='\t')
         queries = g_seqs_df['protein'].tolist()
-    else:
-        print("No CSV file provided. Using sample queries for demonstration.")
-        queries = sample_queries
-    
-    # Trim sequences if start/end positions are specified
+    except FileNotFoundError:
+        print(f"Error: The file {args.generated_seqs_csv} was not found.")
+        sys.exit(1)
+
+    # 3. Trim the sequences to the specified structure region
     if args.structure_end is not None:
         trimmed_queries = [q[args.structure_start:args.structure_end] for q in queries]
     else:
         trimmed_queries = [q[args.structure_start:] for q in queries]
 
-    # Score sequences in parallel
-    scores = score_generated_sequences_parallel(trimmed_queries, args.ref_pdb, args.foldmason_path, args.max_workers)
+    # 4. Score the sequences in parallel
+    scores = LDDT_scoring_parallel(
+        queries=trimmed_queries,
+        ref_pdb=ref_pdb_path,
+        foldmason_path=args.foldmason_path,
+        method='foldmason',
+        max_workers=args.max_workers
+    )
 
-    # Create a DataFrame with the results and save to a CSV file
-    results_df = pd.DataFrame({'protein': queries, 'lddt_score': [scores.get(q, 'N/A') for q in trimmed_queries]})
+    # 5. Save the results
+    g_seqs_df['lddt_score'] = [scores.get(q, 'N/A') for q in trimmed_queries]
     output_filename = f"{args.output_prefix}_scores.csv"
-    results_df.to_csv(output_filename, sep='\t', index=False)
+    g_seqs_df.to_csv(output_filename, sep='\t', index=False)
     print(f"Scoring complete. Results saved to {output_filename}")
 
 if __name__ == '__main__':
