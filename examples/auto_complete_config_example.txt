@@ -1,0 +1,12 @@
+# lignase_h8
+gene=NW_009276944.1
+start=782277
+end=783406
+strand=-1
+pstart=0
+pend=450
+sstart=0
+send=352
+min=250
+max=300
+foldmason=/global/homes/z/zhwang/bin/foldmason
