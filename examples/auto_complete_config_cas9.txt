@@ -1,0 +1,12 @@
+#cas9
+gene=NZ_LS483338.1
+start=983954
+end=988060
+strand=-1
+pstart=0
+pend=3000
+sstart=1000
+send=1369
+max=400
+min=350
+foldmason=/global/homes/z/zhwang/bin/foldmason

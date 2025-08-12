@@ -1,0 +1,12 @@
+# nignase
+gene=NC_013407.1
+start=844962
+end=846269
+strand=1
+pstart=0
+pend=600
+sstart=50
+send=435
+min=250
+max=300
+foldmason=/global/homes/z/zhwang/bin/foldmason
