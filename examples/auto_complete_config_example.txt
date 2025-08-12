@@ -1,12 +1,12 @@
-# lignase_h8
-gene=NW_009276944.1
-start=782277
-end=783406
+# GMP
+gene=NZ_JAYXHC010000003.1
+start=157
+end=1698
 strand=-1
 pstart=0
-pend=450
-sstart=0
-send=352
+pend=600
+sstart=150
+send=500
 min=250
 max=300
 foldmason=/global/homes/z/zhwang/bin/foldmason
