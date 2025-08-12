@@ -8,13 +8,13 @@ from Bio.Seq import Seq, translate
 from Bio import Align
 from genomeocean.dnautils import get_nuc_seq_by_id, reverse_complement
 
-def get_reference_protein(gen_id, start, end, strand, structure_start=0, structure_end=None):
+def get_reference_protein(gene_id, start, end, strand, structure_start=0, structure_end=None):
     """
     Retrieves and translates a reference gene sequence.
     """
-    gene = get_nuc_seq_by_id(gen_id, start=start, end=end)
+    gene = get_nuc_seq_by_id(gene_id, start=start, end=end)
     if gene is None:
-        raise ValueError(f"Failed to retrieve gene sequence {gen_id} from {start} to {end}")
+        raise ValueError(f"Failed to retrieve gene sequence {gene_id} from {start} to {end}")
 
     if strand == -1:
         gene = reverse_complement(gene)
@@ -30,7 +30,7 @@ def main():
     parser = argparse.ArgumentParser(description="Calculate pairwise alignment scores for protein sequences.")
     parser.add_argument("--generated_seqs_csv", required=True, help="CSV file with a 'protein' column.")
     parser.add_argument("--output_prefix", required=True, help="Prefix for the output scores CSV file.")
-    parser.add_argument("--gen_id", required=True, help="Gene ID for the reference sequence.")
+    parser.add_argument("--gene_id", required=True, help="Gene ID for the reference sequence.")
     parser.add_argument("--start", type=int, required=True, help="Start position for the gene sequence.")
     parser.add_argument("--end", type=int, required=True, help="End position for the gene sequence.")
     parser.add_argument("--strand", type=int, choices=[-1, 1], required=True, help="Strand of the gene.")
@@ -41,7 +41,7 @@ def main():
 
     try:
         ref_protein = get_reference_protein(
-            args.gen_id, args.start, args.end, args.strand, 
+            args.gene_id, args.start, args.end, args.strand,
             args.structure_start, args.structure_end
         )
         
@@ -56,9 +56,14 @@ def main():
         aligner = Align.PairwiseAligner()
         aligner.substitution_matrix = Align.substitution_matrices.load("BLOSUM62")
 
-        scores = [aligner.score(ref_protein, q) for q in trimmed_queries]
-        
-        g_seqs_df['pairwise_alignment_score'] = scores
+        max_score = aligner.score(ref_protein, ref_protein)
+        if max_score == 0:
+            print("Warning: Max score for reference protein is 0. Cannot normalize scores.")
+            scores = ['N/A'] * len(trimmed_queries)
+        else:
+            scores = [aligner.score(ref_protein, q) / max_score for q in trimmed_queries]
+
+        g_seqs_df['normalized_pairwise_score'] = scores
         output_filename = f"{args.output_prefix}_pairwise_scores.csv"
         g_seqs_df.to_csv(output_filename, sep='\t', index=False)
         

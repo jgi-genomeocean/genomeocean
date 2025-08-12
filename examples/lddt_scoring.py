@@ -43,7 +43,7 @@ from genomeocean.dnautils import LDDT_scoring_parallel, get_nuc_seq_by_id, rever
 
 def get_reference_pdb(
     output_pdb_path,
-    gen_id=None,
+    gene_id=None,
     sequence=None,
     start=0,
     end=0,
@@ -60,13 +60,13 @@ def get_reference_pdb(
 
     if sequence:
         gene = sequence
-    elif gen_id:
-        gene = get_nuc_seq_by_id(gen_id, start=start, end=end)
+    elif gene_id:
+        gene = get_nuc_seq_by_id(gene_id, start=start, end=end)
         if gene is None:
-            print(f'Failed to retrieve gene sequence {gen_id} from {start} to {end}')
+            print(f'Failed to retrieve gene sequence {gene_id} from {start} to {end}')
             sys.exit(1)
     else:
-        print("Either --gen_id or --sequence must be provided for the reference gene.")
+        print("Either --gene_id or --sequence must be provided for the reference gene.")
         sys.exit(1)
 
     if strand == -1:
@@ -94,7 +94,7 @@ def main():
     parser.add_argument("--output_prefix", required=True, help="Prefix for the output files (including the scores CSV and the reference PDB).")
 
     # Arguments for defining the reference gene and structure
-    parser.add_argument("--gen_id", help="Gene ID for the reference sequence.")
+    parser.add_argument("--gene_id", help="Gene ID for the reference sequence.")
     parser.add_argument("--sequence", help="Raw DNA sequence for the reference.")
     parser.add_argument("--start", type=int, default=0, help="Start position for fetching the gene sequence.")
     parser.add_argument("--end", type=int, default=0, help="End position for fetching the gene sequence.")
@@ -113,7 +113,7 @@ def main():
     # 1. Create the reference PDB file
     get_reference_pdb(
         output_pdb_path=ref_pdb_path,
-        gen_id=args.gen_id,
+        gene_id=args.gene_id,
         sequence=args.sequence,
         start=args.start,
         end=args.end,

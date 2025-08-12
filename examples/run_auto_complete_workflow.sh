@@ -38,7 +38,7 @@ fi
 if [ "$SCORING_METHOD" = "lddt" ]; then
     python ../lddt_scoring.py \
         --generated_seqs_csv "$OUTPUT_PREFIX.csv" \
-        --gen_id "$gene" \
+        --gene_id "$gene" \
         --start "$start" \
         --end "$end" \
         --strand "$strand" \
@@ -49,7 +49,7 @@ if [ "$SCORING_METHOD" = "lddt" ]; then
 elif [ "$SCORING_METHOD" = "pairwise" ]; then
     python ../pairwise_alignment_scoring.py \
         --generated_seqs_csv "$OUTPUT_PREFIX.csv" \
-        --gen_id "$gene" \
+        --gene_id "$gene" \
         --start "$start" \
         --end "$end" \
         --strand "$strand" \
