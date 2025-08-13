@@ -21,12 +21,21 @@ fi
 source "$CONFIG_FILE"
 
 # Stage 1: Generate sequences
-python ../1_generate_for_structure.py \
-  --gen_id "$gene" --start "$start" --end "$end" --strand "$strand" \
-  --prompt_start "$pstart" --prompt_end "$pend" \
-  --num "$NUM_SEQS" --min_seq_len "$min" --max_seq_len "$max" \
-  --output_prefix "$OUTPUT_PREFIX" \
-  --model_dir "$MODEL_DIR"
+if [ -z "$sequence" ]; then
+    python ./1_generate_for_structure.py \
+      --gen_id "$gene" --start "$start" --end "$end" --strand "$strand" \
+      --prompt_start "$pstart" --prompt_end "$pend" \
+      --num "$NUM_SEQS" --min_seq_len "$min" --max_seq_len "$max" \
+      --output_prefix "$OUTPUT_PREFIX" \
+      --model_dir "$MODEL_DIR"
+else
+    python ./1_generate_for_structure.py \
+      --sequence "$sequence" --start "$start" --end "$end" --strand "$strand" \
+      --prompt_start "$pstart" --prompt_end "$pend" \
+      --num "$NUM_SEQS" --min_seq_len "$min" --max_seq_len "$max" \
+      --output_prefix "$OUTPUT_PREFIX" \
+      --model_dir "$MODEL_DIR"
+fi
 
 # Check if the first script was successful
 if [ $? -ne 0 ]; then
@@ -35,28 +44,59 @@ if [ $? -ne 0 ]; then
 fi
 
 # Stage 2: Scoring
-if [ "$SCORING_METHOD" = "lddt" ]; then
-    python ../lddt_scoring.py \
-        --generated_seqs_csv "$OUTPUT_PREFIX.csv" \
-        --gene_id "$gene" \
-        --start "$start" \
-        --end "$end" \
-        --strand "$strand" \
-        --structure_start "$sstart" \
-        --structure_end "$send" \
-        --foldmason_path "$foldmason" \
-        --output_prefix "$OUTPUT_PREFIX"
-elif [ "$SCORING_METHOD" = "pairwise" ]; then
-    python ../pairwise_alignment_scoring.py \
-        --generated_seqs_csv "$OUTPUT_PREFIX.csv" \
-        --gene_id "$gene" \
-        --start "$start" \
-        --end "$end" \
-        --strand "$strand" \
-        --structure_start "$sstart" \
-        --structure_end "$send" \
-        --output_prefix "$OUTPUT_PREFIX"
+if [ -z "$sequence" ]; then
+    if [ "$SCORING_METHOD" = "lddt" ]; then
+        python ./lddt_scoring.py \
+            --generated_seqs_csv "$OUTPUT_PREFIX.csv" \
+            --gene_id "$gene" \
+            --start "$start" \
+            --end "$end" \
+            --strand "$strand" \
+            --structure_start "$sstart" \
+            --structure_end "$send" \
+            --foldmason_path "$foldmason" \
+            --output_prefix "$OUTPUT_PREFIX"
+    elif [ "$SCORING_METHOD" = "pairwise" ]; then
+        python ./pairwise_alignment_scoring.py \
+            --generated_seqs_csv "$OUTPUT_PREFIX.csv" \
+            --gene_id "$gene" \
+            --start "$start" \
+            --end "$end" \
+            --strand "$strand" \
+            --structure_start "$sstart" \
+            --structure_end "$send" \
+            --output_prefix "$OUTPUT_PREFIX"
+    else
+        echo "Error: Invalid scoring method. Choose 'lddt' or 'pairwise'."
+        exit 1
+    fi
 else
+    if [ "$SCORING_METHOD" = "lddt" ]; then
+        python ./lddt_scoring.py \
+            --generated_seqs_csv "$OUTPUT_PREFIX.csv" \
+            --sequence "$sequence" \
+            --start "$start" \
+            --end "$end" \
+            --strand "$strand" \
+            --structure_start "$sstart" \
+            --structure_end "$send" \
+            --foldmason_path "$foldmason" \
+            --output_prefix "$OUTPUT_PREFIX"
+    elif [ "$SCORING_METHOD" = "pairwise" ]; then
+        python ./pairwise_alignment_scoring.py \
+            --generated_seqs_csv "$OUTPUT_PREFIX.csv" \
+            --sequence "$sequence" \
+            --start "$start" \
+            --end "$end" \
+            --strand "$strand" \
+            --structure_start "$sstart" \
+            --structure_end "$send" \
+            --output_prefix "$OUTPUT_PREFIX"
+    else
+        echo "Error: Invalid scoring method. Choose 'lddt' or 'pairwise'."
+        exit 1
+    fi
+fi
     echo "Error: Invalid scoring method. Choose 'lddt' or 'pairwise'."
     exit 1
 fi
