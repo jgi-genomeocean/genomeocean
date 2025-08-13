@@ -36,7 +36,7 @@ def main():
 
     results = []
     
-    # Loop through each gene and run autocompletion
+    # Loyop through each gene and run autocompletion
     for index, row in model1_df.iterrows():
         gene_id = row['id']
         gene_seq = row['gene']
@@ -48,11 +48,11 @@ def main():
 sequence="{gene_seq}"
 start=0
 end={gene_len - 1}
-strand="+"
+strand=1
 pstart=0
 pend=300
-min=0
-max=10000
+min=1000
+max=1024
 sstart=300
 send={3 * orf_len}
 foldmason="foldmason"
