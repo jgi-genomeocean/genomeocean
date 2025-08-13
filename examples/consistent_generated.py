@@ -25,10 +25,16 @@ def check_dependencies():
 def read_sequences(input_file):
     """Reads sequences from a CSV or FASTA file."""
     if input_file.endswith('.csv'):
-        df = pd.read_csv(input_file, header=0)
+        df = pd.read_csv(input_file, header=0, sep=None, engine='python')
         sequences = []
-        for i, row in df.iterrows():
-            sequences.append((f"seq_{i}", row['sequence']))
+        if 'sequence' in df.columns:
+            for i, row in df.iterrows():
+                sequences.append((f"seq_{i}", row['sequence']))
+        elif 'seq' in df.columns:
+            for i, row in df.iterrows():
+                sequences.append((f"seq_{i}", row['seq'])) 
+        else:
+            raise ValueError("CSV file does not have a column named either 'sequence' or 'seq'")   
         return sequences
     elif input_file.endswith('.fa') or input_file.endswith('.fasta'):
         return [(record.id, str(record.seq)) for record in SeqIO.parse(input_file, "fasta")]
@@ -95,7 +101,7 @@ def calculate_entropy(sequence):
     return entropy
 
 
-def run_cd_hit(df_orfs, temp_dir, c, n):
+def run_cd_hit(df_orfs, temp_dir, c, n, size=2):
     """Runs cd-hit to cluster similar proteins."""
     orfs_fasta_path = os.path.join(temp_dir, "orfs.fasta")
     cdhit_output_path = os.path.join(temp_dir, "orfs_cdhit")
@@ -121,7 +127,7 @@ def run_cd_hit(df_orfs, temp_dir, c, n):
                 member_id = line.split(">")[1].split("...")[0]
                 clusters[cluster_id].append(member_id)
 
-    return {k: v for k, v in clusters.items() if len(v) >= 2}
+    return {k: v for k, v in clusters.items() if len(v) >= size}
 
 
 def select_genes(df_orfs, clusters, min_len, max_len):
@@ -151,6 +157,7 @@ def main():
     parser.add_argument("--cdhit_n", type=int, default=5, help="CD-HIT word size.")
     parser.add_argument("--min_len", type=int, default=100, help="Minimum ORF length for final selection.")
     parser.add_argument("--max_len", type=int, default=400, help="Maximum ORF length for final selection.")
+    parser.add_argument("--size", type=int, default=2, help="At least this many are repeatedly generated")
     parser.add_argument("--entropy_threshold", type=float, default=2.5, help="Entropy threshold for filtering low-complexity sequences.")
     args = parser.parse_args()
 
@@ -170,12 +177,12 @@ def main():
             return
 
         # Step 4: Run CD-HIT
-        large_clusters = run_cd_hit(df_orfs, temp_dir, args.cdhit_c, args.cdhit_n)
+        large_clusters = run_cd_hit(df_orfs, temp_dir, args.cdhit_c, args.cdhit_n, args.size)
         if not large_clusters:
-            logging.warning("No clusters with at least two members were found. Exiting.")
+            logging.warning(f"No clusters with at least {args.size} members were found. Exiting.")
             return
             
-        logging.info(f"Found {len(large_clusters)} clusters with at least two members.")
+        logging.info(f"Found {len(large_clusters)} clusters with at least {args.size} members.")
 
         # Step 5: Select Genes
         df_selected = select_genes(df_orfs, large_clusters, args.min_len, args.max_len)
