@@ -39,6 +39,8 @@ def main():
     # Loyop through each gene and run autocompletion
     for index, row in model1_df.iterrows():
         gene_id = row['id']
+        if os.path.exists(f"battle_bot_output_{gene_id}.csv"):
+            continue
         gene_seq = row['gene']
         orf_len = len(row['ORF'])
         gene_len = len(gene_seq)
