@@ -3,13 +3,14 @@ import subprocess
 import pandas as pd
 import os
 
-def run_autocomplete(config_file, model_dir, num_sequences, output_prefix, scoring_method):
+def run_autocomplete(config_file, model_dir, model1_genes, num_sequences, output_prefix, scoring_method):
     """Runs the autocomplete workflow."""
     command = [
         'bash',
         './run_auto_complete_workflow.sh',
         config_file,
         model_dir,
+        model1_genes,
         str(num_sequences),
         output_prefix,
         scoring_method
@@ -36,7 +37,7 @@ def main():
 
     results = []
     
-    # Loyop through each gene and run autocompletion
+    # Loop through each gene and run autocompletion
     for index, row in model1_df.iterrows():
         gene_id = row['id']
         if os.path.exists(f"battle_bot_output_{gene_id}.csv"):
@@ -67,6 +68,7 @@ foldmason="foldmason"
         success = run_autocomplete(
             config_filename,
             args.model2_dir,
+            args.model1_genes,
             20,  # num_sequences (trials)
             f"battle_bot_output_{gene_id}",
             "pairwise"  # scoring_method

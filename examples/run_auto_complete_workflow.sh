@@ -1,16 +1,17 @@
 #!/bin/bash
 
 # Check for the correct number of arguments
-if [ "$#" -ne 5 ]; then
-    echo "Usage: $0 <config_file> <model_dir> <num_sequences> <output_prefix> <scoring_method>"
+if [ "$#" -ne 6 ]; then
+    echo "Usage: $0 <config_file> <model_dir> <model1_genes> <num_sequences> <output_prefix> <scoring_method>"
     exit 1
 fi
 
 CONFIG_FILE="$1"
 MODEL_DIR="$2"
-NUM_SEQS="$3"
-OUTPUT_PREFIX="$4"
-SCORING_METHOD="$5"
+MODEL1_GENES="$3"
+NUM_SEQS="$4"
+OUTPUT_PREFIX="$5"
+SCORING_METHOD="$6"
 
 # Read variables from the config file
 if [ ! -f "$CONFIG_FILE" ]; then
@@ -43,11 +44,22 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Stage 2: Scoring
+# Stage 2: Filter generated sequences for consistency
+python ./consistent_generated.py \
+    --input "$OUTPUT_PREFIX.csv" \
+    --output "$OUTPUT_PREFIX.consistent.csv"
+
+# Check if the consistency filter script was successful
+if [ $? -ne 0 ]; then
+    echo "Error: Filtering for consistency failed."
+    exit 1
+fi
+
+# Stage 3: Scoring
 if [ -z "$sequence" ]; then
     if [ "$SCORING_METHOD" = "lddt" ]; then
         python ./lddt_scoring.py \
-            --generated_seqs_csv "$OUTPUT_PREFIX.csv" \
+            --generated_seqs_csv "$OUTPUT_PREFIX.consistent.csv" \
             --gene_id "$gene" \
             --start "$start" \
             --end "$end" \
@@ -58,7 +70,7 @@ if [ -z "$sequence" ]; then
             --output_prefix "$OUTPUT_PREFIX"
     elif [ "$SCORING_METHOD" = "pairwise" ]; then
         python ./pairwise_alignment_scoring.py \
-            --generated_seqs_csv "$OUTPUT_PREFIX.csv" \
+            --generated_seqs_csv "$OUTPUT_PREFIX.consistent.csv" \
             --gene_id "$gene" \
             --start "$start" \
             --end "$end" \
@@ -73,7 +85,7 @@ if [ -z "$sequence" ]; then
 else
     if [ "$SCORING_METHOD" = "lddt" ]; then
         python ./lddt_scoring.py \
-            --generated_seqs_csv "$OUTPUT_PREFIX.csv" \
+            --generated_seqs_csv "$OUTPUT_PREFIX.consistent.csv" \
             --sequence "$sequence" \
             --start "$start" \
             --end "$end" \
@@ -84,7 +96,7 @@ else
             --output_prefix "$OUTPUT_PREFIX"
     elif [ "$SCORING_METHOD" = "pairwise" ]; then
         python ./pairwise_alignment_scoring.py \
-            --generated_seqs_csv "$OUTPUT_PREFIX.csv" \
+            --generated_seqs_csv "$OUTPUT_PREFIX.consistent.csv" \
             --sequence "$sequence" \
             --start "$start" \
             --end "$end" \
@@ -96,9 +108,6 @@ else
         echo "Error: Invalid scoring method. Choose 'lddt' or 'pairwise'."
         exit 1
     fi
-fi
-    echo "Error: Invalid scoring method. Choose 'lddt' or 'pairwise'."
-    exit 1
 fi
 
 # Check if the scoring script was successful

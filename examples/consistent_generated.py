@@ -117,7 +117,7 @@ def run_cd_hit(df_orfs, temp_dir, c, n, size=2):
     )
 
     clusters = {}
-    with open(f"{cdhit_output_path}.clstr", "r") as f:
+    with open(f"{cdhit_output_path}.clstr", "r").
         cluster_id = None
         for line in f:
             if line.startswith(">"):
@@ -131,7 +131,7 @@ def run_cd_hit(df_orfs, temp_dir, c, n, size=2):
 
 
 def select_genes(df_orfs, clusters, min_len, max_len):
-    """Randomly selects a gene from each large cluster within a specified length range."""
+    """Selects the longest gene from each large cluster within a specified length range."""
     selected_genes_info = []
     for _, members in clusters.items():
         valid_members = [
@@ -140,7 +140,7 @@ def select_genes(df_orfs, clusters, min_len, max_len):
         ]
 
         if valid_members:
-            selected_member_id = random.choice(valid_members)
+            selected_member_id = max(valid_members, key=lambda member_id: len(df_orfs.loc[df_orfs['id'] == member_id, 'ORF'].iloc[0]))
             selected_genes_info.append(df_orfs[df_orfs['id'] == selected_member_id])
 
     if selected_genes_info:
@@ -157,7 +157,7 @@ def main():
     parser.add_argument("--cdhit_n", type=int, default=5, help="CD-HIT word size.")
     parser.add_argument("--min_len", type=int, default=100, help="Minimum ORF length for final selection.")
     parser.add_argument("--max_len", type=int, default=400, help="Maximum ORF length for final selection.")
-    parser.add_argument("--size", type=int, default=2, help="At least this many are repeatedly generated")
+    parser.add_argument("--size", type=int, default=1, help="At least this many are repeatedly generated")
     parser.add_argument("--entropy_threshold", type=float, default=2.5, help="Entropy threshold for filtering low-complexity sequences.")
     args = parser.parse_args()
 

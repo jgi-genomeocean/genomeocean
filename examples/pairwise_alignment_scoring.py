@@ -51,7 +51,7 @@ def main():
             args.sequence, args.structure_start, args.structure_end
         )
         
-        g_seqs_df = pd.read_csv(args.generated_seqs_csv, sep=None, engine='python')
+        g_seqs_df = pd.read_csv(args.generated_seqs_csv, sep=',', engine='python')
         queries = g_seqs_df['protein'].tolist()
 
         if args.structure_end is not None:

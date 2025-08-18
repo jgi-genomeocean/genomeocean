@@ -41,8 +41,7 @@ from Bio.Seq import Seq, translate
 
 from genomeocean.dnautils import LDDT_scoring_parallel, get_nuc_seq_by_id, reverse_complement, fasta2pdb_api
 
-def get_reference_pdb(
-    output_pdb_path,
+def get_reference_protein_sequence(
     gene_id=None,
     sequence=None,
     start=0,
@@ -54,10 +53,6 @@ def get_reference_pdb(
     """
     Creates a reference PDB file from a gene sequence.
     """
-    if os.path.exists(output_pdb_path):
-        print(f'PDB file {output_pdb_path} already exists, using it as reference.')
-        return
-
     if sequence:
         gene = sequence
     elif gene_id:
@@ -73,18 +68,17 @@ def get_reference_pdb(
         gene = reverse_complement(gene)
 
     protein_sequence = translate(Seq(gene), to_stop=True)
-    
+
     if structure_end is None:
         structure_end = len(protein_sequence)
-        
+
     structure_segment = protein_sequence[structure_start:structure_end]
 
     if not structure_segment:
         print("Error: The specified structure segment is empty.")
         sys.exit(1)
-        
-    fasta2pdb_api(structure_segment, output_pdb_path)
-    print(f"Reference PDB file created at {output_pdb_path}")
+
+    return structure_segment
 
 def main():
     parser = argparse.ArgumentParser(description="Score protein sequences against a reference PDB structure.")
@@ -105,14 +99,12 @@ def main():
     # Arguments for the scoring tool
     parser.add_argument("--foldmason_path", required=True, help="Path to the FoldMason executable.")
     parser.add_argument("--max_workers", type=int, default=None, help="Maximum number of parallel workers for scoring.")
-    
+    parser.add_argument("--truncate-sequences", default=True, action=argparse.BooleanOptionalAction, help="Truncate query and reference to same length for scoring.")
+
     args = parser.parse_args()
 
-    ref_pdb_path = args.output_prefix + '_ref.pdb'
-
-    # 1. Create the reference PDB file
-    get_reference_pdb(
-        output_pdb_path=ref_pdb_path,
+    # 1. Get reference protein sequence
+    ref_protein_seq = get_reference_protein_sequence(
         gene_id=args.gene_id,
         sequence=args.sequence,
         start=args.start,
@@ -124,29 +116,62 @@ def main():
 
     # 2. Load the generated sequences
     try:
-        g_seqs_df = pd.read_csv(args.generated_seqs_csv, sep='\t')
-        queries = g_seqs_df['protein'].tolist()
+        g_seqs_df = pd.read_csv(args.generated_seqs_csv)
+        if 'protein' in g_seqs_df.columns:
+            queries = g_seqs_df['protein'].tolist()
+        elif 'ORF' in g_seqs_df.columns:
+            queries = g_seqs_df['ORF'].tolist()
+        else:
+            print("Error: CSV file must contain a 'protein' or 'ORF' column.")
+            sys.exit(1)
     except FileNotFoundError:
         print(f"Error: The file {args.generated_seqs_csv} was not found.")
         sys.exit(1)
 
-    # 3. Trim the sequences to the specified structure region
+    # 3. Trim the query sequences to the specified structure region
     if args.structure_end is not None:
         trimmed_queries = [q[args.structure_start:args.structure_end] for q in queries]
     else:
         trimmed_queries = [q[args.structure_start:] for q in queries]
 
-    # 4. Score the sequences in parallel
+
+    final_ref_seq = ref_protein_seq
+    final_queries = trimmed_queries
+
+    if args.truncate_sequences:
+        min_len = len(ref_protein_seq)
+        for q in trimmed_queries:
+            min_len = min(min_len, len(q))
+
+        if min_len < len(ref_protein_seq) or any(len(q) > min_len for q in trimmed_queries):
+             print(f"Truncating reference and query sequences to length {min_len}")
+             final_ref_seq = ref_protein_seq[:min_len]
+             final_queries = [q[:min_len] for q in trimmed_queries]
+
+    # 4. Create the reference PDB file
+    if args.truncate_sequences:
+        ref_pdb_path = args.output_prefix + f'_ref_len{len(final_ref_seq)}.pdb'
+    else:
+        ref_pdb_path = args.output_prefix + '_ref.pdb'
+
+    if os.path.exists(ref_pdb_path):
+        print(f'PDB file {ref_pdb_path} already exists, using it as reference.')
+    else:
+        fasta2pdb_api(final_ref_seq, ref_pdb_path)
+        print(f"Reference PDB file created at {ref_pdb_path}")
+
+
+    # 5. Score the sequences in parallel
     scores = LDDT_scoring_parallel(
-        queries=trimmed_queries,
+        queries=final_queries,
         target_pdb=ref_pdb_path,
         foldmason_path=args.foldmason_path,
         method='foldmason',
         max_workers=args.max_workers
     )
 
-    # 5. Save the results
-    g_seqs_df['lddt_score'] = [scores.get(q, 'N/A') for q in trimmed_queries]
+    # 6. Save the results
+    g_seqs_df['lddt_score'] = [scores.get(q, 'N/A') for q in final_queries]
     output_filename = f"{args.output_prefix}_scores.csv"
     g_seqs_df.to_csv(output_filename, sep='\t', index=False)
     print(f"Scoring complete. Results saved to {output_filename}")
