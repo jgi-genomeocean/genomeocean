@@ -31,6 +31,61 @@ def get_reference_protein(gene_id, start, end, strand, sequence=None, structure_
         
     return protein_sequence[structure_start:structure_end]
 
+def load_sequences(filepath):
+    """Loads sequences from a CSV file."""
+    try:
+        df = pd.read_csv(filepath, sep=',', engine='python')
+        return df
+    except FileNotFoundError:
+        print(f"Error: Input CSV file not found at {filepath}")
+        exit(1)
+    except Exception as e:
+        print(f"Error reading or parsing CSV file {filepath}: {e}")
+        exit(1)
+
+def trim_sequences(df, structure_start, structure_end):
+    """Extracts and trims query sequences from the dataframe."""
+    try:
+        queries = df['ORF'].tolist()
+        if structure_end is not None:
+            trimmed = [q[structure_start:structure_end] for q in queries]
+        else:
+            trimmed = [q[structure_start:] for q in queries]
+        return trimmed
+    except KeyError:
+        print(f"Error: 'ORF' column not found in the input CSV.")
+        exit(1)
+    except TypeError as e:
+        print(f"Error processing sequences from 'ORF' column. Make sure they are valid sequences. Details: {e}")
+        exit(1)
+
+def calculate_scores(ref_protein, queries):
+    """Calculates alignment scores for query sequences against a reference."""
+    aligner = Align.PairwiseAligner()
+    aligner.substitution_matrix = Align.substitution_matrices.load("BLOSUM62")
+    
+    try:
+        max_score = aligner.score(ref_protein, ref_protein)
+        if max_score == 0:
+            print("Warning: Max score for reference protein is 0. Cannot normalize scores.")
+            return ['N/A'] * len(queries)
+        else:
+            return [aligner.score(ref_protein, q) / max_score for q in queries]
+    except Exception as e:
+        print(f"An error occurred during sequence alignment: {e}")
+        exit(1)
+
+def save_scores(df, scores, output_prefix):
+    """Saves the scores to a CSV file."""
+    try:
+        df['score'] = scores
+        output_filename = f"{output_prefix}.csv"
+        df.to_csv(output_filename, index=False)
+        print(f"Pairwise alignment scoring complete. Results saved to {output_filename}")
+    except Exception as e:
+        print(f"Error saving results to {output_filename}: {e}")
+        exit(1)
+
 def main():
     parser = argparse.ArgumentParser(description="Calculate pairwise alignment scores for protein sequences.")
     parser.add_argument("--generated_seqs_csv", required=True, help="CSV file with a 'protein' column.")
@@ -50,34 +105,14 @@ def main():
             args.gene_id, args.start, args.end, args.strand,
             args.sequence, args.structure_start, args.structure_end
         )
-        
-        g_seqs_df = pd.read_csv(args.generated_seqs_csv, sep=',', engine='python')
-        queries = g_seqs_df['ORF'].tolist()
-
-        if args.structure_end is not None:
-            trimmed_queries = [q[args.structure_start:args.structure_end] for q in queries]
-        else:
-            trimmed_queries = [q[args.structure_start:] for q in queries]
-
-        aligner = Align.PairwiseAligner()
-        aligner.substitution_matrix = Align.substitution_matrices.load("BLOSUM62")
-
-        max_score = aligner.score(ref_protein, ref_protein)
-        if max_score == 0:
-            print("Warning: Max score for reference protein is 0. Cannot normalize scores.")
-            scores = ['N/A'] * len(trimmed_queries)
-        else:
-            scores = [aligner.score(ref_protein, q) / max_score for q in trimmed_queries]
-
-        g_seqs_df['score'] = scores
-        output_filename = f"{args.output_prefix}.csv"
-        g_seqs_df.to_csv(output_filename, index=False)
-        
-        print(f"Pairwise alignment scoring complete. Results saved to {output_filename}")
-
-    except (ValueError, FileNotFoundError) as e:
-        print(f"Error: {e}")
+    except ValueError as e:
+        print(f"Error getting reference protein: {e}")
         exit(1)
+        
+    g_seqs_df = load_sequences(args.generated_seqs_csv)
+    trimmed_queries = trim_sequences(g_seqs_df, args.structure_start, args.structure_end)
+    scores = calculate_scores(ref_protein, trimmed_queries)
+    save_scores(g_seqs_df, scores, args.output_prefix)
 
 if __name__ == '__main__':
     main()
