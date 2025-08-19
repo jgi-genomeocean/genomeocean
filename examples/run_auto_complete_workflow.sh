@@ -108,6 +108,7 @@ else
         echo "Error: Invalid scoring method. Choose 'lddt' or 'pairwise'."
         exit 1
     fi
+    rm "$OUTPUT_PREFIX.consistent.csv"
 fi
 
 # Check if the scoring script was successful

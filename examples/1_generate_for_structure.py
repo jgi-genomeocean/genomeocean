@@ -45,20 +45,7 @@ import argparse
 
 from genomeocean.dnautils import get_nuc_seq_by_id, introduce_mutations, reverse_complement
 from genomeocean.generation import SequenceGenerator
-from Bio.Seq import Seq, translate
 
-def get_largest_orf(seq):
-    """
-    Finds the longest Open Reading Frame (ORF) in a given DNA sequence.
-    """
-    seq = Seq(seq)
-    orfs = []
-    for frame in range(3):
-        for i in range(frame, len(seq), 3):
-            if seq[i:i+3] in ['ATG', 'GTG']:
-                orfs.append(str(seq[i:].translate(to_stop=True)))
-        orfs.append(str(seq[frame:].translate(to_stop=True)))
-    return max(orfs, key=len) if orfs else ''
 
 def generate_sequences(
     gen_id=None, 
@@ -119,18 +106,14 @@ def generate_sequences(
         repetition_penalty=1.0, 
         seed=1234
     )
-    g_seqs = seq_gen.generate_sequences(prepend_prompt_to_output=True, max_repeats=100)
+    g_seqs = seq_gen.generate_sequences(prepend_prompt_to_output=True, max_repeats=-1)
     print(f'Total {g_seqs.shape[0]} sequences were generated.')  
     os.remove('tmp_prompts.csv')
 
     if backward:
         g_seqs['seq'] = g_seqs['seq'].apply(reverse_complement)
     
-    g_seqs['protein'] = g_seqs['seq'].apply(get_largest_orf)  
-    g_seqs['orf_len'] = g_seqs['protein'].apply(lambda x: 3*len(x))
-    g_seqs['length'] = g_seqs['seq'].apply(len)
-    g_seqs = g_seqs[g_seqs['orf_len'] >= len(gene) - 100].copy()
-    print(f'Total {g_seqs.shape[0]} sequences have longer ORFs than the original minus 100bp.')
+    print(f'Total {g_seqs.shape[0]} sequences were generated.')
     
     return g_seqs
 
