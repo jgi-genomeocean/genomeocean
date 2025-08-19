@@ -52,7 +52,7 @@ def main():
         )
         
         g_seqs_df = pd.read_csv(args.generated_seqs_csv, sep=',', engine='python')
-        queries = g_seqs_df['protein'].tolist()
+        queries = g_seqs_df['ORF'].tolist()
 
         if args.structure_end is not None:
             trimmed_queries = [q[args.structure_start:args.structure_end] for q in queries]

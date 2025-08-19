@@ -117,7 +117,7 @@ def run_cd_hit(df_orfs, temp_dir, c, n, size=2):
     )
 
     clusters = {}
-    with open(f"{cdhit_output_path}.clstr", "r").
+    with open(f"{cdhit_output_path}.clstr", "r") as f:
         cluster_id = None
         for line in f:
             if line.startswith(">"):
