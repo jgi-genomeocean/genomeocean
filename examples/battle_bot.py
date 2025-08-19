@@ -18,6 +18,7 @@ def run_autocomplete(config_file, model_dir, model1_genes, num_sequences, output
     result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode != 0:
         print(f"Error running autocomplete for {output_prefix}:")
+        print(f"The command was: {' '.join(command)}")
         print(result.stderr)
         return False
     return True
@@ -73,8 +74,6 @@ send={orf_len}
             f"{args.output_prefix}_{gene_id}",
             "pairwise"  # scoring_method
         )
-        if not success:
-            print("autocomplete run failed")
 
         # Clean up the temporary config file
         os.remove(config_filename)
