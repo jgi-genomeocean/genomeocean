@@ -57,9 +57,8 @@ pstart=0
 pend=300
 min=1000
 max=1024
-sstart=300
-send=orf_len
-foldmason="foldmason"
+sstart=100
+send={orf_len}
 """
         config_filename = f"temp_config_{gene_id}.txt"
         with open(config_filename, "w") as f:
