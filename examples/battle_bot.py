@@ -6,14 +6,13 @@ import logging
 from matplotlib_venn import venn2
 import matplotlib.pyplot as plt
 
-def run_autocomplete(config_file, model_dir, genes_file, num_sequences, output_prefix, scoring_method, log_file):
-    """Runs the autocomplete workflow."""
+def run_autocomplete_batch(tasks_file, model_dir, num_sequences, output_prefix, scoring_method, log_file):
+    """Runs the autocomplete workflow in batch mode."""
     command = [
         'bash',
-        './run_auto_complete_workflow.sh',
-        config_file,
+        './run_auto_complete_workflow_batch.sh',
+        tasks_file,
         model_dir,
-        genes_file,
         str(num_sequences),
         output_prefix,
         scoring_method
@@ -21,11 +20,11 @@ def run_autocomplete(config_file, model_dir, genes_file, num_sequences, output_p
     logging.info(f"Running command: {' '.join(command)}")
     result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode != 0:
-        logging.error(f"Error running autocomplete for {output_prefix}:")
+        logging.error(f"Error running autocomplete batch for {output_prefix}:")
         logging.error(f"The command was: {' '.join(command)}")
         logging.error(result.stderr)
         return False
-    logging.info(f"Successfully ran autocomplete for {output_prefix}")
+    logging.info(f"Successfully ran autocomplete batch for {output_prefix}")
     return True
 
 def main():
@@ -63,48 +62,45 @@ def main():
         logging.info(f"Sampling {args.max_genes} genes from {args.model2_genes}")
         model2_genes_df = model2_genes_df.sample(n=args.max_genes, random_state=42)
 
-    def process_genes(genes_df, genes_name, model_dir, output_prefix_template):
+    def process_genes_batch(genes_df, genes_name, model_dir, output_prefix_template):
+        tasks = []
         for index, row in genes_df.iterrows():
             gene_id = row['id']
             gene_seq = row['gene']
             orf_len = len(row['ORF'])
             gene_len = len(gene_seq)
-
-            config_content = f"""
-sequence="{gene_seq}"
-start=0
-end={gene_len - 1}
-strand=1
-pstart=0
-pend=300
-min=1000
-max=1024
-sstart=100
-send={orf_len}
-"""
-            config_filename = f"temp_config_{genes_name}_{gene_id}.txt"
-            with open(config_filename, "w") as f:
-                f.write(config_content)
-
-            output_prefix = output_prefix_template.format(gene_id=gene_id)
             
-            logging.info(f"Running autocomplete for {genes_name} gene {gene_id} with model {model_dir}")
-            run_autocomplete(
-                config_filename,
-                model_dir,
-                f"temp_{genes_name}.csv",
-                20,
-                output_prefix,
-                "pairwise",
-                log_file
-            )
+            task_output_prefix = output_prefix_template.format(gene_id=gene_id)
 
-            if not args.debug:
-                os.remove(config_filename)
+            tasks.append({
+                'gene_id': gene_id,
+                'sequence': gene_seq,
+                'start': 0,
+                'end': gene_len - 1,
+                'strand': 1,
+                'prompt_start': 0,
+                'prompt_end': 300,
+                'structure_start': 100,
+                'structure_end': orf_len,
+                'output_prefix': task_output_prefix
+            })
 
-    # Create temporary gene files
-    model1_genes_df.to_csv("temp_model1_genes.csv", index=False)
-    model2_genes_df.to_csv("temp_model2_genes.csv", index=False)
+        tasks_df = pd.DataFrame(tasks)
+        tasks_filename = f"temp_tasks_{genes_name}_{os.path.basename(model_dir)}.csv"
+        tasks_df.to_csv(tasks_filename, index=False)
+
+        logging.info(f"Running autocomplete in batch for {genes_name} with model {model_dir}")
+        run_autocomplete_batch(
+            tasks_filename,
+            model_dir,
+            20,
+            f"{args.output_prefix}/{genes_name}_model_{os.path.basename(model_dir)}",
+            "pairwise",
+            log_file
+        )
+
+        if not args.debug:
+            os.remove(tasks_filename)
 
     # Create subdirectories for outputs
     os.makedirs(f"{args.output_prefix}/model1_genes_model1", exist_ok=True)
@@ -112,17 +108,13 @@ send={orf_len}
     os.makedirs(f"{args.output_prefix}/model2_genes_model1", exist_ok=True)
     os.makedirs(f"{args.output_prefix}/model1_genes_model2", exist_ok=True)
 
-    # Run the four scenarios
+    # Run the four scenarios in batch
     logging.info("Starting autocompletion runs...")
-    process_genes(model1_genes_df, "model1_genes", args.model1_dir, f"{args.output_prefix}/model1_genes_model1/gene_{{gene_id}}")
-    process_genes(model2_genes_df, "model2_genes", args.model2_dir, f"{args.output_prefix}/model2_genes_model2/gene_{{gene_id}}")
-    process_genes(model2_genes_df, "model2_genes", args.model1_dir, f"{args.output_prefix}/model2_genes_model1/gene_{{gene_id}}")
-    process_genes(model1_genes_df, "model1_genes", args.model2_dir, f"{args.output_prefix}/model1_genes_model2/gene_{{gene_id}}")
+    process_genes_batch(model1_genes_df, "model1_genes", args.model1_dir, f"{args.output_prefix}/model1_genes_model1/gene_{{gene_id}}")
+    process_genes_batch(model2_genes_df, "model2_genes", args.model2_dir, f"{args.output_prefix}/model2_genes_model2/gene_{{gene_id}}")
+    process_genes_batch(model2_genes_df, "model2_genes", args.model1_dir, f"{args.output_prefix}/model2_genes_model1/gene_{{gene_id}}")
+    process_genes_batch(model1_genes_df, "model1_genes", args.model2_dir, f"{args.output_prefix}/model1_genes_model2/gene_{{gene_id}}")
     logging.info("Finished autocompletion runs.")
-
-    if not args.debug:
-        os.remove("temp_model1_genes.csv")
-        os.remove("temp_model2_genes.csv")
 
     def get_autocompleted_genes(output_dir, genes_df):
         autocompleted_genes = set()

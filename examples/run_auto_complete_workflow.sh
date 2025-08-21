@@ -109,15 +109,6 @@ else
         exit 1
     fi
 #    rm "$OUTPUT_PREFIX.consistent.csv"
-      python ./pairwise_alignment_scoring.py \
-            --generated_seqs_csv $OUTPUT_PREFIX.consistent.csv \
-            --sequence $sequence \
-            --start $start \
-            --end $end \
-            --strand $strand \
-            --structure_start $sstart \
-            --structure_end $send \
-            --output_prefix $OUTPUT_PREFIX
 fi
 
 # Check if the scoring script was successful
