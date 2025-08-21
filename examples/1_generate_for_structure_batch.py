@@ -73,9 +73,6 @@ def generate_sequences_batch(
     with open(prompts_file, 'w') as f:
         for p in prompts:
             f.write(p + '\n')
-    
-    # Register cleanup function to remove temporary prompts file
-    atexit.register(os.remove, prompts_file)
 
     seq_gen = SequenceGenerator(
         model_dir=model_dir,
@@ -107,11 +104,13 @@ def generate_sequences_batch(
             
         task_seqs.to_csv(output_filename, sep='\t', index=False)
         print(f"Generated sequences for task {i} saved to {output_filename}")
+    # Register cleanup function to remove temporary prompts file
+    atexit.register(os.remove, prompts_file)        
 
 def main():
     parser = argparse.ArgumentParser(description="Generate DNA sequences in batch from a list of prompts.")
     parser.add_argument("--tasks_file", required=True, help="CSV file with tasks. Each row should define a generation task.")
-    parser.add_ārgsument("--model_dir", required=True, help="Directory of the language model.")
+    parser.add_argument("--model_dir", required=True, help="Directory of the language model.")
     parser.add_argument("--num", type=int, default=20, help="Number of sequences to generate per task.")
     parser.add_argument("--min_seq_len", type=int, default=1000, help="Minimum sequence length.")
     parser.add_argument("--max_seq_len", type=int, default=1024, help="Maximum sequence length.")
