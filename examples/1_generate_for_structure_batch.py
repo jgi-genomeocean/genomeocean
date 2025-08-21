@@ -69,7 +69,7 @@ def generate_sequences_batch(
             'prompt_end': prompt_end
         })
 
-    prompts_file = f"{output_prefix}_prompts.tmp"
+    prompts_file = f"{output_prefix}_prompts.txt"
     with open(prompts_file, 'w') as f:
         for p in prompts:
             f.write(p + '\n')
