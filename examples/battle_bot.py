@@ -116,56 +116,65 @@ def main():
     process_genes_batch(model1_genes_df, "model1_genes", args.model2_dir, f"{args.output_prefix}/model1_genes_model2/gene_{{gene_id}}")
     logging.info("Finished autocompletion runs.")
 
-    def get_autocompleted_genes(output_dir, genes_df):
-        autocompleted_genes = set()
-        for index, row in genes_df.iterrows():
-            gene_id = row['id']
-            result_file = f"{output_dir}/gene_{gene_id}.scores.csv"
-            if os.path.exists(result_file):
-                try:
-                    scores_df = pd.read_csv(result_file)
-                    if not scores_df.empty and scores_df['score'].max() >= 0.80:
-                        autocompleted_genes.add(gene_id)
-                except pd.errors.EmptyDataError:
-                    logging.warning(f"File {result_file} is empty.")
-        return autocompleted_genes
+def get_autocompleted_genes(output_dir, genes_df, threshold):
+    autocompleted_genes = set()
+    for index, row in genes_df.iterrows():
+        gene_id = row['id']
+        result_file = f"{output_dir}/gene_{gene_id}.scores.csv"
+        if os.path.exists(result_file):
+            try:
+                scores_df = pd.read_csv(result_file)
+                if not scores_df.empty and scores_df['score'].max() >= threshold:
+                    autocompleted_genes.add(gene_id)
+            except pd.errors.EmptyDataError:
+                logging.warning(f"File {result_file} is empty.")
+    return autocompleted_genes
 
     # Analyze results
     logging.info("Analyzing results...")
-    model1_genes_m1_completed = get_autocompleted_genes(f"{args.output_prefix}/model1_genes_model1", model1_genes_df)
-    model1_genes_m2_completed = get_autocompleted_genes(f"{args.output_prefix}/model1_genes_model2", model1_genes_df)
-    model2_genes_m1_completed = get_autocompleted_genes(f"{args.output_prefix}/model2_genes_model1", model2_genes_df)
-    model2_genes_m2_completed = get_autocompleted_genes(f"{args.output_prefix}/model2_genes_model2", model2_genes_df)
+    
+    summaries = []
+    thresholds = [0.8, 0.6, 0.4]
 
-    # Summary statistics
-    summary = {
-        "model1_genes_total": len(model1_genes_df),
-        "model1_genes_model1_completed": len(model1_genes_m1_completed),
-        "model1_genes_model2_completed": len(model1_genes_m2_completed),
-        "model1_genes_overlap": len(model1_genes_m1_completed.intersection(model1_genes_m2_completed)),
-        "model2_genes_total": len(model2_genes_df),
-        "model2_genes_model1_completed": len(model2_genes_m1_completed),
-        "model2_genes_model2_completed": len(model2_genes_m2_completed),
-        "model2_genes_overlap": len(model2_genes_m1_completed.intersection(model2_genes_m2_completed))
-    }
+    for threshold in thresholds:
+        logging.info(f"Analyzing with threshold: {threshold}")
 
-    summary_df = pd.DataFrame([summary])
+        model1_genes_m1_completed = get_autocompleted_genes(f"{args.output_prefix}/model1_genes_model1", model1_genes_df, threshold)
+        model1_genes_m2_completed = get_autocompleted_genes(f"{args.output_prefix}/model1_genes_model2", model1_genes_df, threshold)
+        model2_genes_m1_completed = get_autocompleted_genes(f"{args.output_prefix}/model2_genes_model1", model2_genes_df, threshold)
+        model2_genes_m2_completed = get_autocompleted_genes(f"{args.output_prefix}/model2_genes_model2", model2_genes_df, threshold)
+
+        # Summary statistics
+        summary = {
+            "threshold": threshold,
+            "model1_genes_total": len(model1_genes_df),
+            "model1_genes_model1_completed": len(model1_genes_m1_completed),
+            "model1_genes_model2_completed": len(model1_genes_m2_completed),
+            "model1_genes_overlap": len(model1_genes_m1_completed.intersection(model1_genes_m2_completed)),
+            "model2_genes_total": len(model2_genes_df),
+            "model2_genes_model1_completed": len(model2_genes_m1_completed),
+            "model2_genes_model2_completed": len(model2_genes_m2_completed),
+            "model2_genes_overlap": len(model2_genes_m1_completed.intersection(model2_genes_m2_completed))
+        }
+        summaries.append(summary)
+        logging.info(summary)
+
+        # Create Venn diagrams
+        plt.figure()
+        venn2([model1_genes_m1_completed, model1_genes_m2_completed], set_labels=('Model 1', 'Model 2'))
+        plt.title(f"Overlap for model1_genes (threshold >= {threshold})")
+        plt.savefig(f"{args.output_prefix}_model1_genes_venn_threshold_{threshold}.pdf")
+        logging.info(f"Venn diagram for model1_genes with threshold {threshold} saved.")
+
+        plt.figure()
+        venn2([model2_genes_m1_completed, model2_genes_m2_completed], set_labels=('Model 1', 'Model 2'))
+        plt.title(f"Overlap for model2_genes (threshold >= {threshold})")
+        plt.savefig(f"{args.output_prefix}_model2_genes_venn_threshold_{threshold}.pdf")
+        logging.info(f"Venn diagram for model2_genes with threshold {threshold} saved.")
+
+    summary_df = pd.DataFrame(summaries)
     summary_df.to_csv(f"{args.output_prefix}_summary.csv", index=False)
     logging.info("Summary statistics saved.")
-    logging.info(summary)
-
-    # Create Venn diagrams
-    plt.figure()
-    venn2([model1_genes_m1_completed, model1_genes_m2_completed], set_labels=('Model 1', 'Model 2'))
-    plt.title("Overlap for model1_genes")
-    plt.savefig(f"{args.output_prefix}_model1_genes_venn.pdf")
-    logging.info("Venn diagram for model1_genes saved.")
-
-    plt.figure()
-    venn2([model2_genes_m1_completed, model2_genes_m2_completed], set_labels=('Model 1', 'Model 2'))
-    plt.title("Overlap for model2_genes")
-    plt.savefig(f"{args.output_prefix}_model2_genes_venn.pdf")
-    logging.info("Venn diagram for model2_genes saved.")
 
     logging.info("Battle-bot finished.")
 
