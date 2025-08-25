@@ -2,16 +2,15 @@
 
 # Check for the correct number of arguments
 if [ "$#" -ne 6 ]; then
-    echo "Usage: $0 <config_file> <model_dir> <model1_genes> <num_sequences> <output_prefix> <scoring_method>"
+    echo "Usage: $0 <config_file> <model_dir> <num_sequences> <output_prefix> <scoring_method>"
     exit 1
 fi
 
 CONFIG_FILE="$1"
 MODEL_DIR="$2"
-MODEL1_GENES="$3"
-NUM_SEQS="$4"
-OUTPUT_PREFIX="$5"
-SCORING_METHOD="$6"
+NUM_SEQS="$3"
+OUTPUT_PREFIX="$4"
+SCORING_METHOD="$5"
 
 # Read variables from the config file
 if [ ! -f "$CONFIG_FILE" ]; then
