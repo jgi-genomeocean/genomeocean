@@ -79,8 +79,8 @@ def main():
                 'end': gene_len - 1,
                 'strand': 1,
                 'prompt_start': 0,
-                'prompt_end': 300,
-                'structure_start': 100,
+                'prompt_end': 150,
+                'structure_start': 50,
                 'structure_end': orf_len,
                 'output_prefix': task_output_prefix
             })
@@ -93,7 +93,7 @@ def main():
         run_autocomplete_batch(
             tasks_filename,
             model_dir,
-            20,
+            100,
             f"{args.output_prefix}/{genes_name}_model_{os.path.basename(model_dir)}",
             "pairwise",
             log_file
@@ -120,7 +120,7 @@ def get_autocompleted_genes(output_dir, genes_df, threshold):
     autocompleted_genes = set()
     for index, row in genes_df.iterrows():
         gene_id = row['id']
-        result_file = f"{output_dir}/gene_{gene_id}.scores.csv"
+        result_file = f"{output_dir}/gene_{gene_id}.csv"
         if os.path.exists(result_file):
             try:
                 scores_df = pd.read_csv(result_file)
