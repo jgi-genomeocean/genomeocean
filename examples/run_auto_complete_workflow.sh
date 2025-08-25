@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Check for the correct number of arguments
-if [ "$#" -ne 6 ]; then
+if [ "$#" -ne 5 ]; then
     echo "Usage: $0 <config_file> <model_dir> <num_sequences> <output_prefix> <scoring_method>"
     exit 1
 fi

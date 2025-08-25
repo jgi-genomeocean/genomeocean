@@ -70,7 +70,7 @@ def calculate_scores(ref_protein, queries):
             print("Warning: Max score for reference protein is 0. Cannot normalize scores.")
             return ['N/A'] * len(queries)
         else:
-            return [aligner.score(ref_protein, q) / max_score for q in queries]
+            return [aligner.score(ref_protein, q) / max_score if len(q) > 0 else 0 for q in queries]
     except Exception as e:
         print(f"An error occurred during sequence alignment: {e}")
         exit(1)
@@ -88,7 +88,7 @@ def save_scores(df, scores, output_prefix):
 
 def main():
     parser = argparse.ArgumentParser(description="Calculate pairwise alignment scores for protein sequences.")
-    parser.add_argument("--generated_seqs_csv", required=True, help="CSV file with a 'protein' column.")
+    parser.add_argument("--generated_seqs_csv", required=True, help="CSV file with a 'ORF' column.")
     parser.add_argument("--output_prefix", required=True, help="Prefix for the output scores CSV file.")
     parser.add_argument("--gene_id", help="Gene ID for the reference sequence.")
     parser.add_argument("--sequence", help="Raw DNA sequence for the reference.")
