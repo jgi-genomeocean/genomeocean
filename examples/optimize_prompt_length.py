@@ -46,7 +46,7 @@ def analyze_results(output_dir, genes_df):
             if os.path.exists(result_file):
                 try:
                     scores_df = pd.read_csv(result_file)
-                    if not scores_df.empty:
+                    if (not scores_df.empty) and ('score' in scores_df.columns):
                         top_scores = scores_df['score'].nlargest(3)
                         if len(top_scores) > 0:
                             score = top_scores.mean()

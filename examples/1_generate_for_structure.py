@@ -100,6 +100,8 @@ def generate_sequences(
         num=kwargs.get('num', 200),
         min_seq_len=kwargs.get('min_seq_len', 250),
         max_seq_len=kwargs.get('max_seq_len', 300),
+        top_k=50,
+        top_p=0.95,
         temperature=1.0,
         presence_penalty=0.5, 
         frequency_penalty=0.5, 

@@ -80,6 +80,8 @@ def generate_sequences_batch(
         num=num,
         min_seq_len=min_seq_len,
         max_seq_len=max_seq_len,
+        top_k=30,
+        top_p=0.95,
         temperature=1.0,
         presence_penalty=0.5,
         frequency_penalty=0.5,
