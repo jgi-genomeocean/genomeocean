@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Check for the correct number of arguments
-if [ "$#" -ne 5 ]; then
-    echo "Usage: $0 <tasks_file> <model_dir> <num_sequences> <output_prefix> <scoring_method>"
+if [ "$#" -lt 5 ]; then
+    echo "Usage: $0 <tasks_file> <model_dir> <num_sequences> <output_prefix> <scoring_method> [top_k] [top_p] [temperature]"
     exit 1
 fi
 
@@ -11,6 +11,9 @@ MODEL_DIR="$2"
 NUM_SEQS="$3"
 OUTPUT_PREFIX="$4"
 SCORING_METHOD="$5"
+TOP_K="${6:-30}"
+TOP_P="${7:-0.95}"
+TEMPERATURE="${8:-1.0}"
 
 # Stage 1: Generate sequences in batch
 python ./1_generate_for_structure_batch.py \
@@ -19,7 +22,10 @@ python ./1_generate_for_structure_batch.py \
   --num "$NUM_SEQS" \
   --min_seq_len 1000 \
   --max_seq_len 1024 \
-  --output_prefix "$OUTPUT_PREFIX"
+  --output_prefix "$OUTPUT_PREFIX" \
+  --top_k "$TOP_K" \
+  --top_p "$TOP_P" \
+  --temperature "$TEMPERATURE"
 
 # Check if the first script was successful
 if [ $? -ne 0 ]; then

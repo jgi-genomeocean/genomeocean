@@ -14,7 +14,10 @@ def generate_sequences_batch(
     num,
     min_seq_len,
     max_seq_len,
-    output_prefix
+    output_prefix,
+    top_k,
+    top_p,
+    temperature
 ):
     """
     Generates sequences in batch from a list of tasks.
@@ -80,9 +83,9 @@ def generate_sequences_batch(
         num=num,
         min_seq_len=min_seq_len,
         max_seq_len=max_seq_len,
-        top_k=30,
-        top_p=0.95,
-        temperature=1.0,
+        top_k=top_k,
+        top_p=top_p,
+        temperature=temperature,
         presence_penalty=0.5,
         frequency_penalty=0.5,
         repetition_penalty=1.0,
@@ -117,6 +120,9 @@ def main():
     parser.add_argument("--min_seq_len", type=int, default=1000, help="Minimum sequence length.")
     parser.add_argument("--max_seq_len", type=int, default=1024, help="Maximum sequence length.")
     parser.add_argument("--output_prefix", default='batch_generated', help="Prefix for temporary and summary files.")
+    parser.add_argument("--top_k", type=int, default=30, help="Top-k sampling.")
+    parser.add_argument("--top_p", type=float, default=0.95, help="Top-p sampling.")
+    parser.add_argument("--temperature", type=float, default=1.0, help="Temperature for sampling.")
     
     args = parser.parse_args()
 
@@ -129,6 +135,9 @@ def main():
         min_seq_len=args.min_seq_len,
         max_seq_len=args.max_seq_len,
         output_prefix=args.output_prefix,
+        top_k=args.top_k,
+        top_p=args.top_p,
+        temperature=args.temperature,
     )
 
 if __name__ == '__main__':

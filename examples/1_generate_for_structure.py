@@ -100,9 +100,9 @@ def generate_sequences(
         num=kwargs.get('num', 200),
         min_seq_len=kwargs.get('min_seq_len', 250),
         max_seq_len=kwargs.get('max_seq_len', 300),
-        top_k=50,
-        top_p=0.95,
-        temperature=1.0,
+        top_k=kwargs.get('top_k', 50),
+        top_p=kwargs.get('top_p', 0.95),
+        temperature=kwargs.get('temperature', 1.0),
         presence_penalty=0.5, 
         frequency_penalty=0.5, 
         repetition_penalty=1.0, 
@@ -139,6 +139,9 @@ def main():
     parser.add_argument("--num", type=int, default=200, help="Number of sequences to generate.")
     parser.add_argument("--min_seq_len", type=int, default=250, help="Minimum sequence length.")
     parser.add_argument("--max_seq_len", type=int, default=300, help="Maximum sequence length.")
+    parser.add_argument("--top_k", type=int, default=50, help="Top-k sampling.")
+    parser.add_argument("--top_p", type=float, default=0.95, help="Top-p sampling.")
+    parser.add_argument("--temperature", type=float, default=1.0, help="Temperature for sampling.")
     
     # Argument for the output file
     parser.add_argument("--output_prefix", default='generated', help="Prefix for the output CSV file.")
@@ -161,6 +164,9 @@ def main():
         num=args.num,
         min_seq_len=args.min_seq_len,
         max_seq_len=args.max_seq_len,
+        top_k=args.top_k,
+        top_p=args.top_p,
+        temperature=args.temperature,
     )
 
     output_filename = args.output_prefix + '.csv'

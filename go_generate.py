@@ -70,18 +70,26 @@ def main():
             min_seq_len = 1024
             temperature = 0.7
             repetition_penalty = 1.0
+            top_k = -1
+            top_p = 0.9
         elif args.preset == 'conservative_long':
             min_seq_len = 9600
             temperature = 0.7
             repetition_penalty = 1.0
+            top_k = -1
+            top_p = 0.9
         elif args.preset == 'creative':
             min_seq_len = 1024
             temperature = 0.9
             repetition_penalty = 1.2
+            top_k = -1
+            top_p = 0.9
         elif args.preset == 'creative_long':
             min_seq_len = 9600
             temperature = 0.9
             repetition_penalty = 1.2
+            top_k = -1
+            top_p = 0.9
         else:
             raise argparse.ArgumentTypeError(f"Please select between presets [conservative, conservative_long, creative, creative_long].")
 
@@ -92,6 +100,10 @@ def main():
         temperature = args.temperature
     if args.repetition_penalty is not None:
         repetition_penalty = args.repetition_penalty
+    if args.top_k != -1:
+        top_k = args.top_k
+    if args.top_p != 0.9:
+        top_p = args.top_p
 
     # Initialize the SequenceGenerator with the provided arguments
     seq_gen = SequenceGenerator(
@@ -102,8 +114,8 @@ def main():
         min_seq_len=min_seq_len,
         max_seq_len=args.max_seq_len,
         temperature=temperature,
-        top_k=args.top_k,
-        top_p=args.top_p,
+        top_k=top_k,
+        top_p=top_p,
         presence_penalty=args.presence_penalty,
         frequency_penalty=args.frequency_penalty,
         repetition_penalty=repetition_penalty,

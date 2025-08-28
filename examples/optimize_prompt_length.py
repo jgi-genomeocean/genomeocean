@@ -5,7 +5,7 @@ import os
 import logging
 import numpy as np
 
-def run_autocomplete_batch(tasks_file, model_dir, num_sequences, output_prefix, scoring_method, log_file):
+def run_autocomplete_batch(tasks_file, model_dir, num_sequences, output_prefix, scoring_method, log_file, top_k, top_p, temperature):
     """Runs the autocomplete workflow in batch mode."""
     command = [
         'bash',
@@ -14,7 +14,10 @@ def run_autocomplete_batch(tasks_file, model_dir, num_sequences, output_prefix, 
         model_dir,
         str(num_sequences),
         output_prefix,
-        scoring_method
+        scoring_method,
+        str(top_k),
+        str(top_p),
+        str(temperature)
     ]
     logging.info(f"Running command: {' '.join(command)}")
     result = subprocess.run(command, capture_output=True, text=True)
@@ -85,6 +88,9 @@ def main():
     parser.add_argument("--debug", action="store_true", help="Keep intermediate files.")
     parser.add_argument("--max_genes", type=int, default=None, help="Maximum number of genes to process. If not set, all genes will be processed.")
     parser.add_argument("--num_sequences", type=int, default=20, help="Number of sequences to generate for each task.")
+    parser.add_argument("--top_k", type=int, default=30, help="Top-k sampling.")
+    parser.add_argument("--top_p", type=float, default=0.95, help="Top-p sampling.")
+    parser.add_argument("--temperature", type=float, default=1.0, help="Temperature for sampling.")
     args = parser.parse_args()
 
     # Create output directory
@@ -146,7 +152,10 @@ def main():
             args.num_sequences,
             f"{args.output_prefix}/prompt_{prompt_percent}",
             "pairwise",
-            log_file
+            log_file,
+            args.top_k,
+            args.top_p,
+            args.temperature
         )
 
         if not args.debug:

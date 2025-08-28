@@ -58,6 +58,7 @@ model_output = model.generate(
     max_new_tokens=10,
     do_sample=True,
     top_p=0.9,
+    top_k=50,
     temperature=1.0,
     num_return_sequences=1,
 )
