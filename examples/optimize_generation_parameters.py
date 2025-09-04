@@ -28,43 +28,74 @@ from skopt.space import Real
 from skopt.utils import use_named_args
 import matplotlib.pyplot as plt
 from skopt.plots import plot_convergence, plot_objective
+import subprocess
+import pandas as pd
+import uuid
+import textwrap
 
-from genomeocean.generation import SequenceGenerator
 from genomeocean.dnautils import find_tandem_repeats_percentage
 
-# Global variable for the sequence generator to avoid reloading the model
-seq_gen = None
-
 # --- Objective Function ---
-def evaluate_params(temperature, top_p, presence_penalty, frequency_penalty, repetition_penalty, min_seq_len, max_seq_len, num, max_repeats):
+def evaluate_params(temperature, top_p, presence_penalty, frequency_penalty, repetition_penalty, min_seq_len, max_seq_len, num, max_repeats, args):
     """
     Objective function for Bayesian optimization.
     Generates sequences with a given set of parameters and returns the mean
     tandem repeat percentage.
     """
-    global seq_gen
     
     print(f"Testing parameters: temperature={temperature:.3f}, top_p={top_p:.3f}, "
           f"presence_penalty={presence_penalty:.3f}, frequency_penalty={frequency_penalty:.3f}, "
           f"repetition_penalty={repetition_penalty:.3f}")
 
-    # Set new parameters for the global generator instance
-    # This assumes SequenceGenerator stores these as public attributes.
-    seq_gen.temperature = temperature
-    seq_gen.top_p = top_p
-    seq_gen.presence_penalty = presence_penalty
-    seq_gen.frequency_penalty = frequency_penalty
-    seq_gen.repetition_penalty = repetition_penalty
-    seq_gen.min_seq_len = min_seq_len
-    seq_gen.max_seq_len = max_seq_len
-    seq_gen.num = num
-    
-    # Generate sequences
+    # Generate a unique filename for the output
+    run_id = str(uuid.uuid4())
+    output_prefix = os.path.join(args.output_dir, f"temp_{run_id}")
+    output_fasta = f"{output_prefix}.fa"
+
+    # Generate sequences by calling generate_sequences.py as a subprocess
     try:
-        generated_seqs_df = seq_gen.generate_sequences(prepend_prompt_to_output=False, max_repeats=max_repeats)
+        cmd = [
+            'python', 'examples/generate_sequences.py',
+            '--model_dir', args.model_dir,
+            '--promptfile', args.promptfile,
+            '--out_prefix', output_prefix,
+            '--out_format', 'fa',
+            '--num', str(num),
+            '--min_seq_len', str(min_seq_len),
+            '--max_seq_len', str(max_seq_len),
+            '--temperature', f'{temperature:.3f}',
+            '--top_p', f'{top_p:.3f}',
+            '--presence_penalty', f'{presence_penalty:.3f}',
+            '--frequency_penalty', f'{frequency_penalty:.3f}',
+            '--repetition_penalty', f'{repetition_penalty:.3f}',
+            '--max_repeats', str(max_repeats),
+            '--seed', str(args.seed)
+        ]
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
         
+        # Read the generated fasta file
+        sequences = []
+        with open(output_fasta, 'r') as f:
+            header = ''
+            seq = ''
+            for line in f:
+                if line.startswith('>'):
+                    if seq:
+                        sequences.append({'id': header, 'seq': seq})
+                    header = line.strip()
+                    seq = ''
+                else:
+                    seq += line.strip()
+            if seq:
+                sequences.append({'id': header, 'seq': seq})
+
+        generated_seqs_df = pd.DataFrame(sequences)
+
         if generated_seqs_df.empty:
             print("Warning: No sequences were generated. Returning a high penalty.")
+            # Clean up temporary file
+            if os.path.exists(output_fasta):
+                os.remove(output_fasta)
             return 100.0
 
         # Calculate tandem repeat percentage for each sequence
@@ -73,9 +104,27 @@ def evaluate_params(temperature, top_p, presence_penalty, frequency_penalty, rep
         mean_trf = np.mean(trf_percentages)
         print(f"--> Mean Tandem Repeat Percentage: {mean_trf:.2f}%")
         
+        # Clean up temporary file
+        if os.path.exists(output_fasta):
+            os.remove(output_fasta)
+
         return mean_trf
+    except subprocess.CalledProcessError as e:
+        print(f"An error occurred during sequence generation subprocess:")
+        print(f"Command: {' '.join(e.cmd)}")
+        print(f"Return code: {e.returncode}")
+        print(f"Stdout: {e.stdout}")
+        print(f"Stderr: {e.stderr}")
+        # Clean up temporary file
+        if os.path.exists(output_fasta):
+            os.remove(output_fasta)
+        # Return a high value to penalize failing parameter sets
+        return 100.0
     except Exception as e:
         print(f"An error occurred during sequence generation or evaluation: {e}")
+        # Clean up temporary file
+        if os.path.exists(output_fasta):
+            os.remove(output_fasta)
         # Return a high value to penalize failing parameter sets
         return 100.0
 
@@ -94,19 +143,6 @@ def main():
 
     os.makedirs(args.output_dir, exist_ok=True)
 
-    # --- Initialize Sequence Generator ---
-    global seq_gen
-    # We instantiate it once to avoid reloading the model in every optimization step.
-    seq_gen = SequenceGenerator(
-        model_dir=args.model_dir,
-        promptfile=args.promptfile,
-        num=args.num_seqs_per_call,
-        min_seq_len=args.min_seq_len,
-        max_seq_len=args.max_seq_len,
-        top_k=-1, # Keep top_k fixed while optimizing top_p
-        seed=args.seed
-    )
-
     # --- Define Search Space ---
     search_space = [
         Real(0.5, 1.5, name='temperature'),
@@ -124,6 +160,7 @@ def main():
             max_seq_len=args.max_seq_len,
             num=args.num_seqs_per_call,
             max_repeats=100, # Do not filter by repeats during optimization
+            args=args,
             **params
         )
 
