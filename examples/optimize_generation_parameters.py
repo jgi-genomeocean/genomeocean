@@ -55,7 +55,7 @@ def evaluate_params(temperature, top_p, presence_penalty, frequency_penalty, rep
     # Generate sequences by calling generate_sequences.py as a subprocess
     try:
         cmd = [
-            'python', 'examples/generate_sequences.py',
+            'python', 'generate_sequences.py',
             '--model_dir', args.model_dir,
             '--promptfile', args.promptfile,
             '--out_prefix', output_prefix,
