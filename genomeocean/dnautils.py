@@ -135,41 +135,20 @@ def process_genome(genome_file, min_seq_len=5000, max_seq_len=40000, overlap=0, 
     return genome
 
 
-def find_tandem_repeats_percentage(sequence, max_period_size=100):
+def find_tandem_repeats_percentage(sequence, max_period_size=7):
     """
-    Find the percentage of the sequence that consists of perfect tandem repeats.
-    
+    Find the percentage of the sequence that consists of perfect tandem repeats using dustmasker.
+
     Parameters:
     sequence (str): DNA sequence to search for tandem repeats.
-    max_period_size (int): Maximum allowed period size for repeats (default is 7).
-    
+    max_period_size (int): Maximum allowed period size for repeats (default is 7). Doesn't seem to do anything
+
     Returns:
     float: Percentage of the sequence that is made up of tandem repeats.
     """
-    sequence_length = len(sequence)
-    repeats = []
-    covered_positions = set()  # To track positions already counted
 
-    # Iterate over possible period sizes from 1 to max_period_size
-    for period_size in range(1, max_period_size + 1):
-        # Use regex to match a tandem repeat pattern: (x){2,}, where x is any sequence of period_size length, 3 or more times
-        pattern = r'((\w{%d}))\2{2,}' % period_size  # Adjust regex for the period size
-
-        # Find all matches in the sequence
-        for match in re.finditer(pattern, sequence):
-            start = match.start()
-            end = match.end()
-
-            # Only consider new, non-overlapping positions
-            for i in range(start, end):
-                if i not in covered_positions:
-                    covered_positions.add(i)
-    
-    # Calculate the percentage of the sequence that is part of a repeat
-    repeat_length = len(covered_positions)
-    percentage = (repeat_length / sequence_length) * 100
-    
-    return percentage
+    masker = pydustmasker.DustMasker(sequence, score_threshold=max_period_size)
+    return masker.n_masked_bases/len(sequence)*100.0
 
 def fasta2pdb_api(seq, outfile):
     # use esmfold web api for predicting protein structure

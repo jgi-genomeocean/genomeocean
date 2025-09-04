@@ -303,6 +303,7 @@ pillow==11.2.1
     #   mistral-common
     #   torchvision
     #   vllm
+pydustmasker==1.03    
 pyrodigal==3.6.3.post1
     # via -r requirements.in
 prometheus-client==0.21.1

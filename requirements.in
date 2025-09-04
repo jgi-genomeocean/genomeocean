@@ -4,3 +4,4 @@ vllm==0.8.4
 biopython==1.85
 scikit-learn==1.6.1
 pyrodigal==3.6.3.post1
+pydustmasker==1.0.3
