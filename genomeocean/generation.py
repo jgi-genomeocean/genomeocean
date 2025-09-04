@@ -126,7 +126,7 @@ class SequenceGenerator:
             # concatenate prompts to generated sequences, apply to all 
             all_generated['seq'] = all_generated.apply(lambda x: prompts[x.id] + x.seq, axis=1)
         
-        if max_repeats > 0:  # remove those containing mostly simple repeats
+        if 0<max_repeats<100:  # remove those containing mostly simple repeats
             # remove identical duplicates
             all_generated = all_generated.drop_duplicates(subset='seq')
             original_len = len(all_generated)

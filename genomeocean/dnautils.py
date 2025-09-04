@@ -14,6 +14,7 @@ import os, sys
 import tempfile
 import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import pydustmasker
 
 
 def get_nuc_seq_by_id(uid, start=0, end=0, db='nuccore'):
