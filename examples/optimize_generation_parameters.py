@@ -24,7 +24,7 @@ import os
 import argparse
 import numpy as np
 from skopt import gp_minimize
-from skopt.space import Real
+from skopt.space import Real, Integer
 from skopt.utils import use_named_args
 import matplotlib.pyplot as plt
 from skopt.plots import plot_convergence, plot_objective
@@ -36,14 +36,14 @@ import textwrap
 from genomeocean.dnautils import find_tandem_repeats_percentage
 
 # --- Objective Function ---
-def evaluate_params(temperature, top_p, presence_penalty, frequency_penalty, repetition_penalty, min_seq_len, max_seq_len, num, max_repeats, args):
+def evaluate_params(temperature, top_p, top_k, presence_penalty, frequency_penalty, repetition_penalty, min_seq_len, max_seq_len, num, max_repeats, args):
     """
     Objective function for Bayesian optimization.
     Generates sequences with a given set of parameters and returns the mean
     tandem repeat percentage.
     """
     
-    print(f"Testing parameters: temperature={temperature:.3f}, top_p={top_p:.3f}, "
+    print(f"Testing parameters: temperature={temperature:.3f}, top_p={top_p:.3f}, top_k={top_k}, "
           f"presence_penalty={presence_penalty:.3f}, frequency_penalty={frequency_penalty:.3f}, "
           f"repetition_penalty={repetition_penalty:.3f}")
 
@@ -65,6 +65,7 @@ def evaluate_params(temperature, top_p, presence_penalty, frequency_penalty, rep
             '--max_seq_len', str(max_seq_len),
             '--temperature', f'{temperature:.3f}',
             '--top_p', f'{top_p:.3f}',
+            '--top_k', str(top_k),
             '--presence_penalty', f'{presence_penalty:.3f}',
             '--frequency_penalty', f'{frequency_penalty:.3f}',
             '--repetition_penalty', f'{repetition_penalty:.3f}',
@@ -147,9 +148,10 @@ def main():
     search_space = [
         Real(0.5, 1.5, name='temperature'),
         Real(0.5, 1.0, name='top_p'),
+        Integer(1, 100, name='top_k'),
         Real(0.0, 1.0, name='presence_penalty'),
         Real(0.0, 1.0, name='frequency_penalty'),
-        Real(1.0, 1.5, name='repetition_penalty'),
+        Real(1.0, 5.0, name='repetition_penalty'),
     ]
 
     # Wrapper for the objective function to pass fixed arguments from argparse
