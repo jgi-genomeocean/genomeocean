@@ -34,6 +34,7 @@ class TestLLMUtils(unittest.TestCase):
         self.assertEqual(llm_utils.max_divisor_of_12(12), 12)
         self.assertEqual(llm_utils.max_divisor_of_12(7), 6)
         self.assertEqual(llm_utils.max_divisor_of_12(1), 1)
+        self.assertEqual(llm_utils.max_divisor_of_12(0), None)
 
     def test_llmutils_init(self):
         # Test if the LLMUtils instance is created correctly

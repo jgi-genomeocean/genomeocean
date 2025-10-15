@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='genomeocean',
-    version='0.5.0',
+    version='0.5.1',
     author='Zhong Wang',
     author_email='zhongwang@lbl.gov',
     description='A Python library for GenomeOcean inference and fine-tuning.',
@@ -10,16 +10,12 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/jgi-genomeocean/genomeocean",
     packages=setuptools.find_packages(),
-    scripts=[
-        "go_generate.py",
-        "go_scan.py"
-    ],
     classifiers=[
-        'Programming Language :: Python :: 3.8', 
-        'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10', 
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12', 
+        'Programming Language :: Python :: 3.13',
         'Operating System :: OS Independent',
     ],
-    python_requires='>=3.8',
+    python_requires='>=3.10',
 )

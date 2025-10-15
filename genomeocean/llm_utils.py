@@ -63,6 +63,7 @@ class LLMUtils:
             torch_dtype=torch.bfloat16, 
             attn_implementation="flash_attention_2",
         )
+        self.model.config.use_cache = False
         self.gpus = torch.cuda.device_count()
         if self.gpus > 1: # ensure we can use all GPUs on a node allowed by max heades (12)
             self.gpus = max_divisor_of_12(self.gpus)
@@ -126,7 +127,7 @@ class LLMUtils:
         tokenizer = self.tokenizer
         model = transformers.AutoModelForCausalLM.from_pretrained( 
             self.model_dir,
-            trust_remote_code=True,
+            trust_remote_code=False,
             torch_dtype=torch.bfloat16, 
             attn_implementation="flash_attention_2",
         )
@@ -182,7 +183,7 @@ class LLMUtils:
         tokenizer = self.tokenizer
         model = transformers.AutoModelForCausalLM.from_pretrained(
             self.model_dir,
-            trust_remote_code=True,
+            trust_remote_code=False,
             torch_dtype=torch.bfloat16, 
             attn_implementation="flash_attention_2",
         )
@@ -280,7 +281,7 @@ class LLMUtils:
             model=self.model_dir,
             tokenizer=self.model_dir,
             tokenizer_mode="slow",
-            trust_remote_code=True,
+            trust_remote_code=False,
             seed=seed,
             dtype=torch.bfloat16,
             gpu_memory_utilization=0.9, # default is 0.9
@@ -290,8 +291,12 @@ class LLMUtils:
         # Initialize the tokenizer separately
         tokenizer = self.tokenizer
         prompts = ["[CLS]"+p for p in prompts]
-        prompt_token_ids = tokenizer(prompts, add_special_tokens=False)["input_ids"]
-        
+        #prompt_token_ids = tokenizer(prompts, add_special_tokens=False)["input_ids"]
+
+        # Get all valid token IDs except token 8 that corresponding to 'N'
+        vocab_size = self.tokenizer.vocab_size
+        allowed_tokens = [i for i in range(vocab_size) if i != 8]
+
         sampling_params = SamplingParams(
             n=num_generation_from_each_prompt,
             temperature=temperature, 
@@ -304,17 +309,16 @@ class LLMUtils:
             presence_penalty=presence_penalty,
             frequency_penalty=frequency_penalty,
             repetition_penalty=repetition_penalty,
-            logits_processors=[bad_word_processor], #To suppress 'N's from being generated, remove it if not needed
+            allowed_token_ids=allowed_tokens,  # This blocks token 8
         )
         
         # Generate sequences using prompt_token_ids
         generated_sequences = []
         if num_generation_from_each_prompt >= 100:
             # If num_generation_from_each_prompt is greater than 100, generate sequences for each prompt one by one to optimize speed
-            for prompt in prompt_token_ids:
+            for prompt in prompts:
                 all_outputs = llm.generate(
-                    prompts=None, 
-                    prompt_token_ids=prompt,
+                    prompts=prompt,
                     sampling_params=sampling_params,
                 )
 
@@ -326,8 +330,7 @@ class LLMUtils:
         else:
             # Otherwise, directly use the vllm generate function
             all_outputs = llm.generate(
-                prompts=None, 
-                prompt_token_ids=prompt_token_ids,
+                prompts=prompts,
                 sampling_params=sampling_params,
             )
             

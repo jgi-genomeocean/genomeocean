@@ -19,9 +19,9 @@ logger = logging.getLogger(__name__)
 
 # GenomeOcean Model Token Limits - Centralized configuration
 MODEL_TOKEN_LIMITS = {
-    'pGenomeOcean/GenomeOcean-100M': 1024,
-    'pGenomeOcean/GenomeOcean-500M': 1024,
-    'pGenomeOcean/GenomeOcean-4B': 10240
+    'DOEJGI/GenomeOcean-100M': 1024,
+    'DOEJGI/GenomeOcean-500M': 1024,
+    'DOEJGI/GenomeOcean-4B': 10240
 }
 
 def llm_embed_sequences(dna_sequences,
@@ -102,7 +102,6 @@ def llm_embed_sequences(dna_sequences,
             model_max_length=model_max_length,
             padding_side="left", # Pad on left for decoder-only or encoder-decoder models if needed
             use_fast=True,
-            trust_remote_code=True,
         )
         logger.info("Loading model...")
         # Try loading with bfloat16, fallback to float32 if needed
@@ -112,6 +111,7 @@ def llm_embed_sequences(dna_sequences,
                 trust_remote_code=True,
                 torch_dtype=torch.bfloat16, # Use bfloat16 for potential speedup/memory saving
             )
+            model.config.use_cache = False
             logger.info("Model loaded with torch.bfloat16 data type.")
         except (RuntimeError, ValueError) as e: # Catch potential dtype errors
              logger.warning(f"Failed to load model with bfloat16 ({e}). Falling back to default (float32).")
@@ -120,6 +120,7 @@ def llm_embed_sequences(dna_sequences,
                 trust_remote_code=True,
                 # torch_dtype=torch.float32, # Default
              )
+             model.config.use_cache = False
              logger.info("Model loaded with default data type (likely float32).")
 
         # Handle multi-GPU
