@@ -60,7 +60,7 @@ class LLMUtils:
         self.model = MODEL_CLASS.from_pretrained(
             model_dir,
             trust_remote_code=True,
-            torch_dtype=torch.bfloat16, 
+            dtype=torch.bfloat16, 
             attn_implementation="flash_attention_2",
         )
         self.model.config.use_cache = False
@@ -86,7 +86,7 @@ class LLMUtils:
   
         for j, batch in enumerate(tqdm.tqdm(train_loader)):
             with torch.no_grad():
-                token_feat = tokenizer.batch_encode_plus(
+                token_feat = tokenizer(
                         batch,
                         max_length=self.model_max_length,
                         return_tensors='pt',
@@ -109,7 +109,7 @@ class LLMUtils:
                 else:
                     outputs = torch.cat((outputs, model_output), dim=0)
 
-        outputs = np.array(outputs.detach().float().cpu())
+        outputs = outputs.detach().float().cpu().numpy()
 
         # reorder the embeddings according to the original order
         outputs = outputs[np.argsort(idx)]
@@ -128,7 +128,7 @@ class LLMUtils:
         model = transformers.AutoModelForCausalLM.from_pretrained( 
             self.model_dir,
             trust_remote_code=False,
-            torch_dtype=torch.bfloat16, 
+            dtype=torch.bfloat16, 
             attn_implementation="flash_attention_2",
         )
         
@@ -184,7 +184,7 @@ class LLMUtils:
         model = transformers.AutoModelForCausalLM.from_pretrained(
             self.model_dir,
             trust_remote_code=False,
-            torch_dtype=torch.bfloat16, 
+            dtype=torch.bfloat16, 
             attn_implementation="flash_attention_2",
         )
         
@@ -221,7 +221,7 @@ class LLMUtils:
                 shift_labels = shift_labels.view(-1)
                 # Enable model parallelism
                 shift_labels = shift_labels.to(shift_logits.device)
-                loss = loss_fct(shift_logits, shift_labels).cpu().detach().numpy().tolist()
+                loss = loss_fct(shift_logits, shift_labels).float().cpu().detach().numpy().tolist()
                 losses.extend(loss)
             
             #print(np.mean(losses))

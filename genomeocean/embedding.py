@@ -109,7 +109,7 @@ def llm_embed_sequences(dna_sequences,
             model = transformers.AutoModel.from_pretrained(
                 model_name_or_path,
                 trust_remote_code=True,
-                torch_dtype=torch.bfloat16, # Use bfloat16 for potential speedup/memory saving
+                dtype=torch.bfloat16, # Use bfloat16 for potential speedup/memory saving
             )
             model.config.use_cache = False
             logger.info("Model loaded with torch.bfloat16 data type.")
@@ -118,7 +118,7 @@ def llm_embed_sequences(dna_sequences,
              model = transformers.AutoModel.from_pretrained(
                 model_name_or_path,
                 trust_remote_code=True,
-                # torch_dtype=torch.float32, # Default
+                # dtype=torch.float32, # Default
              )
              model.config.use_cache = False
              logger.info("Model loaded with default data type (likely float32).")

@@ -1,0 +1,45 @@
+# -- ANNOTATIONS --
+--extra-index-url https://download.pytorch.org/whl/cu121
+
+# Pin PyTorch and its ecosystem to a known stable version.
+torch
+torchvision
+torchaudio
+
+
+# Primary Dependencies
+# CRITICAL: transformers and vllm to a specific, stable versions
+
+vllm==0.15.0
+transformers  #<=4.56
+peft
+accelerate
+bitsandbytes
+pandas
+vllm
+biopython
+scikit-learn
+pyrodigal
+
+# Acceleration Libraries (often good to list explicitly)
+# flash-attn
+# xformers
+
+# Basic Dependencies
+packaging
+ninja
+setuptools
+wheel
+
+# Cuda
+cuda-python
+cuda-bindings
+
+#
+# IMPORTANT - need to compile flash-attn
+#
+# pip uninstall flash-attn -y
+# pip cache purge
+# rm -rf ~/.cache/pip/wheels/*flash*
+# Now rebuild from source - this MUST compile (takes a few  min)
+# pip install flash-attn --no-build-isolation --no-cache-dir
