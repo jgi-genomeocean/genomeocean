@@ -17,8 +17,8 @@ We provide a container images for GenomeOcean. See `docker/` and `/apptainer/` f
 uv venv GO --python 3.13
 source GO/bin/activate
 # install required packages
-uv pip install --no-cache-dir --upgrade transformers[torch]==4.57.1 peft accelerate bitsandbytes pandas vllm==0.11.0 biopython scikit-learn pyrodigal
-MAX_JOBS=4 uv pip install --no-build-isolation flash_attn==2.8.3
+pip install --no-cache-dir -r requirements.txt
+MAX_JOBS=4 pip install flash-attn --no-build-isolation --no-cache-dir
 ```
 
 #### Install GenomeOcean package
