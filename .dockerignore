@@ -1,0 +1,7 @@
+.git
+__pycache__
+*.pyc
+.eggs
+*.egg-info
+figures
+apptainer

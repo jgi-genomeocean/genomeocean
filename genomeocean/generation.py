@@ -32,7 +32,6 @@ Usage:
     )
 """
 import os
-os.environ['VLLM_WORKER_MULTIPROC_METHOD'] = 'spawn'  # to avoid error in multi-gpu generation
 
 from genomeocean.dnautils import find_tandem_repeats_percentage
 from genomeocean.llm_utils import LLMUtils
@@ -73,6 +72,13 @@ class SequenceGenerator:
         self.frequency_penalty = frequency_penalty
         self.repetition_penalty = repetition_penalty
         self.seed = seed
+        self._llm = None
+
+    @property
+    def llm(self):
+        if self._llm is None:
+            self._llm = LLMUtils(model_dir=self.model_dir)
+        return self._llm
 
     def _load_prompts(self):
         if self.prompts:
@@ -103,7 +109,7 @@ class SequenceGenerator:
     
     def generate_sequences(self, prepend_prompt_to_output=False, max_repeats=0):
         prompts = self._load_prompts()
-        llm = LLMUtils(model_dir=self.model_dir)
+        llm = self.llm
         
         print(f"======First Prompt {prompts[0]}")
         self._print_generate_parameters()

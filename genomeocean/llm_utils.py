@@ -48,27 +48,52 @@ def max_divisor_of_12(number):
 class LLMUtils:
     def __init__(self, model_dir, model_max_length=10240, is_classification_model=False):
         self.model_dir = model_dir # model name or path
-        self.tokenizer =  transformers.AutoTokenizer.from_pretrained(
-                model_dir,
+        self.model_max_length = model_max_length
+        self.is_classification_model = is_classification_model
+        self._tokenizer = None
+        self._model = None
+        self._vllm_engine = None
+
+        self.gpus = torch.cuda.device_count()
+        if self.gpus > 1: # ensure we can use all GPUs on a node allowed by max heads (12)
+            self.gpus = max_divisor_of_12(self.gpus)
+
+    @property
+    def tokenizer(self):
+        if self._tokenizer is None:
+            self._tokenizer = transformers.AutoTokenizer.from_pretrained(
+                self.model_dir,
                 cache_dir=None,
-                model_max_length=model_max_length,
+                model_max_length=self.model_max_length,
                 padding_side="left",
                 use_fast=True,
                 trust_remote_code=True,
             )
-        MODEL_CLASS = transformers.AutoModel if not is_classification_model else transformers.AutoModelForSequenceClassification
-        self.model = MODEL_CLASS.from_pretrained(
-            model_dir,
-            trust_remote_code=True,
-            dtype=torch.bfloat16, 
-            attn_implementation="flash_attention_2",
-        )
-        self.model.config.use_cache = False
-        self.gpus = torch.cuda.device_count()
-        if self.gpus > 1: # ensure we can use all GPUs on a node allowed by max heades (12)
-            self.gpus = max_divisor_of_12(self.gpus)
-        self.model_max_length = model_max_length
-        self.model_dir = model_dir
+        return self._tokenizer
+
+    @property
+    def model(self):
+        if self._model is None:
+            # Unload vLLM if it exists to free memory
+            if self._vllm_engine is not None:
+                print("Unloading vLLM engine to load Transformers model...")
+                import gc
+                # Note: vLLM engine is hard to unload completely without process restart,
+                # but we can at least try to clear references.
+                del self._vllm_engine
+                self._vllm_engine = None
+                gc.collect()
+                torch.cuda.empty_cache()
+
+            MODEL_CLASS = transformers.AutoModel if not self.is_classification_model else transformers.AutoModelForSequenceClassification
+            self._model = MODEL_CLASS.from_pretrained(
+                self.model_dir,
+                trust_remote_code=True,
+                torch_dtype=torch.bfloat16,
+                attn_implementation="sdpa",
+            )
+            self._model.config.use_cache = False
+        return self._model
 
     
     def predict(self, dna_sequences, batch_size=25, do_embedding=True):
@@ -79,10 +104,8 @@ class LLMUtils:
         dna_sequences, idx = reorder_sequences(dna_sequences)
         tokenizer = self.tokenizer
         model = self.model
-        if self.gpus > 1:
-            model = nn.DataParallel(model)
         model.to("cuda")
-        train_loader = util_data.DataLoader(dna_sequences, batch_size=batch_size*self.gpus, shuffle=False, num_workers=2*self.gpus, prefetch_factor=2)
+        train_loader = util_data.DataLoader(dna_sequences, batch_size=batch_size, shuffle=False, num_workers=2, prefetch_factor=2)
   
         for j, batch in enumerate(tqdm.tqdm(train_loader)):
             with torch.no_grad():
@@ -128,8 +151,8 @@ class LLMUtils:
         model = transformers.AutoModelForCausalLM.from_pretrained( 
             self.model_dir,
             trust_remote_code=False,
-            dtype=torch.bfloat16, 
-            attn_implementation="flash_attention_2",
+            torch_dtype=torch.bfloat16,
+            attn_implementation="sdpa",
         )
         
         model.to("cuda")
@@ -184,8 +207,8 @@ class LLMUtils:
         model = transformers.AutoModelForCausalLM.from_pretrained(
             self.model_dir,
             trust_remote_code=False,
-            dtype=torch.bfloat16, 
-            attn_implementation="flash_attention_2",
+            torch_dtype=torch.bfloat16,
+            attn_implementation="sdpa",
         )
         
         model.to("cuda")
@@ -276,17 +299,29 @@ class LLMUtils:
         """  
         num_gpus = self.gpus
 
-        # Initialize the LLM model using vllm package
-        llm = LLM(
-            model=self.model_dir,
-            tokenizer=self.model_dir,
-            tokenizer_mode="slow",
-            trust_remote_code=False,
-            seed=seed,
-            dtype=torch.bfloat16,
-            gpu_memory_utilization=0.9, # default is 0.9
-            tensor_parallel_size=num_gpus,
-        )
+        # Initialize the LLM model using vllm package (lazy load and cache)
+        if self._vllm_engine is None:
+            # Unload Transformers model if it exists
+            if self._model is not None:
+                print("Unloading Transformers model to load vLLM engine...")
+                del self._model
+                self._model = None
+                import gc
+                gc.collect()
+                torch.cuda.empty_cache()
+
+            self._vllm_engine = LLM(
+                model=self.model_dir,
+                trust_remote_code=False,
+                seed=seed,
+                dtype=torch.bfloat16,
+                max_model_len=10240,
+                gpu_memory_utilization=0.6, # reduced from 0.8 for 4B stability
+                enforce_eager=True, # avoid CUDA graph capture hangs on aarch64
+                tensor_parallel_size=num_gpus,
+            )
+        
+        llm = self._vllm_engine
 
         # Initialize the tokenizer separately
         tokenizer = self.tokenizer

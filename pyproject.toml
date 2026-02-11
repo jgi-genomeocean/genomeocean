@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "genomeocean"
+version = "0.6.0"
+description = "A Python library for GenomeOcean inference and fine-tuning."
+readme = "README.md"
+license = {text = "BSD-3-Clause"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Zhong Wang", email = "zhongwang@lbl.gov"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "transformers>=5.0.0",
+    "peft",
+    "accelerate",
+    "pandas",
+    "biopython",
+    "scikit-learn",
+    "numpy",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+generation = [
+    "vllm>=0.15.1",
+]
+all = [
+    "vllm>=0.15.1",
+    "bitsandbytes",
+    "pyrodigal",
+    "cuda-python",
+    "cuda-bindings",
+]
+
+[project.urls]
+Homepage = "https://github.com/jgi-genomeocean/genomeocean"
+
+[project.scripts]
+go-generate = "go_generate:main"
+go-scan = "go_scan:main"
+
+[tool.setuptools.packages.find]
+include = ["genomeocean*"]

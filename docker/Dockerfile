@@ -1,6 +1,5 @@
-# Use the CUDA developer base image for Ubuntu 24.04
-FROM nvidia/cuda:13.0.1-cudnn-devel-ubuntu24.04
-
+# Use official NVIDIA vLLM container for CUDA 13 and Blackwell support
+FROM nvcr.io/nvidia/vllm:25.09-py3
 
 # Set up environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -9,47 +8,41 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PATH="/usr/bin:$PATH" \
     CUDA_HOME="/usr/local/cuda" \
     VLLM_WORKER_MULTIPROC_METHOD=spawn \
+    VLLM_USE_V1=0 \
     HF_HOME="/workspace/model_cache" \
-    VENV_DIR="/genomeocean/GO" \
-    PATH="/genomeocean/GO/bin:$PATH" \
-    TMPDIR="/workspace/tmp"
+    TMPDIR="/workspace/tmp" \
+    LD_LIBRARY_PATH="/usr/local/cuda/lib64:${LD_LIBRARY_PATH}"
 
-# Install system dependencies
+
+
+
+
+# Install system dependencies (basic ones, base image has most)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    wget \
-    git \
-    curl \
-    bzip2 \
-    libx11-6 \
-    build-essential \
-    python3.13 \
-    python3.13-dev \
-    python3.13-venv \
-    python3-pip \
+    wget git curl bzip2 libx11-6 build-essential \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
-RUN ln -s /usr/bin/python3.13 /usr/bin/python
 
-# Create directories for model cache, runtime temporary files, and a build-time temporary directory
+# Create directories
 RUN mkdir -p /workspace/model_cache /workspace/tmp /workspace/build_temp
-# Set TMPDIR to use the new build-time temporary directory
 ENV TMPDIR="/workspace/build_temp"
 
-
-# Clone GenomeOcean repository
-WORKDIR /
-RUN git clone https://github.com/jgi-genomeocean/genomeocean.git
+# Copy the local refactored GenomeOcean code instead of cloning from GitHub
+COPY . /genomeocean
 WORKDIR /genomeocean
 
-# Create venv and install Python dependencies
-RUN python3.13 -m venv GO
-ENV PATH="/genomeocean/GO/bin:$PATH"
-RUN . /genomeocean/GO/bin/activate && \
-    pip install uv && \
-    uv pip install --no-cache-dir --upgrade transformers[torch] peft accelerate bitsandbytes pandas vllm biopython scikit-learn pyrodigal && \
-    MAX_JOBS=4 uv pip install flash-attn --no-cache-dir --no-build-isolation && \
-    uv pip install -e .
+# Install Python dependencies into SYSTEM python (inheriting torch/vllm)
+# Fix PEP 668 "externally managed" error on newer Debian/Ubuntu
+RUN rm -f /usr/lib/python3.*/EXTERNALLY-MANAGED && \
+    pip install uv --break-system-packages && \
+    # Install dependencies WITHOUT upgrading torch/vllm/transformers which are provided by the container
+    uv pip install --system --no-cache-dir peft accelerate bitsandbytes pandas biopython scikit-learn pyrodigal \
+        cloudpickle msgspec outlines sentencepiece pydantic ray psutil && \
+    uv pip install --system --no-deps -e .
 
-# Clean up the build directory
+
+
+
+# Clean up
 RUN rm -rf /workspace/build_temp
 
 # Set default command

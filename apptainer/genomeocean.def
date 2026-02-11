@@ -1,6 +1,5 @@
 Bootstrap: docker
-From: nvidia/cuda:13.0.1-cudnn-devel-ubuntu24.04
-
+From: nvcr.io/nvidia/vllm:25.09-py3
 
 %environment
     export DEBIAN_FRONTEND=noninteractive
@@ -8,62 +7,46 @@ From: nvidia/cuda:13.0.1-cudnn-devel-ubuntu24.04
     export PYTHONUNBUFFERED=1
     export CUDA_HOME="/usr/local/cuda"
     export VLLM_WORKER_MULTIPROC_METHOD=spawn
+    export VLLM_USE_V1=0
     export HF_HOME="/workspace/model_cache"
-    export VENV_DIR="/genomeocean/GO"
-    export PATH="/genomeocean/GO/bin:$PATH"
     export TMPDIR="/workspace/tmp"
+    export LD_LIBRARY_PATH="/usr/local/cuda/lib64:${LD_LIBRARY_PATH}"
+    export PATH="/home/vllm/.local/bin:$PATH"
 
 %post
     export DEBIAN_FRONTEND=noninteractive
-    apt update -y
-    apt install --no-install-recommends -y software-properties-common
-    add-apt-repository -y ppa:deadsnakes/ppa
-    apt-get update
-    apt-get install -y --no-install-recommends \
-        wget \
-        git \
-        curl \
-        bzip2 \
-        libx11-6 \
-        build-essential \
-        python3.13 \
-        python3.13-dev \
-        python3.13-venv \
-        python3-pip \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-    ln -sf /usr/bin/python3.13 /usr/bin/python
-
-    # Create directories for model cache, runtime temporary files, and a build-time temporary directory
+    
+    # Create directories
     mkdir -p /workspace/model_cache /workspace/tmp /workspace/build_temp
-    # Set TMPDIR to use the new build-time temporary directory
     export TMPDIR="/workspace/build_temp"
 
-    cd /
+    # Install system dependencies
+    apt-get update && apt-get install -y --no-install-recommends \
+        wget git curl bzip2 libx11-6 build-essential \
+        && apt-get clean && rm -rf /var/lib/apt/lists/*
+    
+    # Install uv
+    pip install uv --break-system-packages
 
-    git clone https://github.com/jgi-genomeocean/genomeocean.git
+    # Install Python dependencies using uv (inheriting from base image's python)
+    # We use --system because we want to install into the container's main python environment
+    # mimicking the Dockerfile behavior
+    uv pip install --system --no-cache-dir peft accelerate bitsandbytes pandas biopython scikit-learn pyrodigal \
+        cloudpickle msgspec outlines sentencepiece pydantic ray psutil
+
+    # Install the package from local source (copied in %files)
     cd /genomeocean
+    uv pip install --system --no-deps -e .
 
-    python3.13 -m venv GO
-
-    # Activate venv for subsequent commands in this script
-    . /genomeocean/GO/bin/activate
-
-    pip install uv
-
-    uv pip install --no-cache-dir --upgrade transformers[torch] peft accelerate bitsandbytes pandas vllm biopython scikit-learn pyrodigal
-    MAX_JOBS=4 uv pip install flash-attn --no-cache-dir --no-build-isolation
-    uv pip install -e .
-
-    # Clean up the build directory
+    # Clean up
     rm -rf /workspace/build_temp
 
 %files
-    # Add any necessary files from the host here if needed
+    # Copy all files from current directory to /genomeocean in container
+    . /genomeocean
 
 %runscript
     echo "Welcome to the GenomeOcean container!"
-    echo "The Python virtual environment 'GO' is activated."
     exec /bin/bash "$@"
 
 %labels

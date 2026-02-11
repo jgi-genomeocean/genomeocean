@@ -31,7 +31,8 @@ def llm_embed_sequences(dna_sequences,
                         strategy='mean',
                         device='cuda',
                         num_workers=2,
-                        prefetch_factor=2):
+                        prefetch_factor=2,
+                        attn_implementation='sdpa'):
     """
     Embed DNA sequences using a pre-trained Hugging Face transformer model (e.g., GenomeOcean).
 
@@ -66,7 +67,6 @@ def llm_embed_sequences(dna_sequences,
         return np.empty((0, 0)) # Return empty array matching expected type
 
     # Import gc at the beginning of the function for garbage collection
-    import gc
 
     if strategy not in ['mean', 'last_token']:
         raise ValueError(f"Invalid embedding strategy: {strategy}. Choose 'mean' or 'last_token'.")
@@ -109,7 +109,8 @@ def llm_embed_sequences(dna_sequences,
             model = transformers.AutoModel.from_pretrained(
                 model_name_or_path,
                 trust_remote_code=True,
-                dtype=torch.bfloat16, # Use bfloat16 for potential speedup/memory saving
+                torch_dtype=torch.bfloat16,
+                attn_implementation=attn_implementation,
             )
             model.config.use_cache = False
             logger.info("Model loaded with torch.bfloat16 data type.")
@@ -192,10 +193,11 @@ def llm_embed_sequences(dna_sequences,
             for batch in tqdm.tqdm(dataloader, desc="Embedding sequences", disable=is_distributed and local_rank != 0): # Only show progress bar on rank 0
                 # Tokenize sequences - handles different length sequences by padding to the longest in batch
                 # No N-padding of sequences is needed beforehand
-                token_feat = tokenizer.batch_encode_plus(
+                token_feat = tokenizer(
                     batch, max_length=model_max_length, return_tensors='pt',
                     padding='longest', truncation=True
                 )
+
                 input_ids = token_feat['input_ids'].to(device)
                 attention_mask = token_feat['attention_mask'].to(device)
 

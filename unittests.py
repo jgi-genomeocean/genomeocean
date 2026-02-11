@@ -126,8 +126,8 @@ class TestLLMUtils(unittest.TestCase):
             mock_model.assert_called_once_with(
                 "test_classifier",
                 trust_remote_code=True,
-                dtype=torch.bfloat16,
-                attn_implementation="flash_attention_2",
+                torch_dtype=torch.bfloat16,
+                attn_implementation="sdpa",
             )
 
 if __name__ == "__main__":

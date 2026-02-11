@@ -5,31 +5,36 @@
 
 ## 1. Installation
 
-### 1.1 Docker or Apptainer
-We provide a container images for GenomeOcean. See `docker/` and `/apptainer/` for more information.
+### 1.1 Docker or Apptainer (Recommended)
+We provide container images for GenomeOcean, which is the recommended way to run the software due to complex dependencies like CUDA and vLLM. See `docker/` and `apptainer/` for more information on building the images.
 
+### 1.2 uv (Alternative)
 
-### 1.2 uv
+If you prefer to run locally without containers, we recommend using `uv` for dependency management.
 
-#### Pre-requisites: Python 3.13 (tested), older version should work as well
+#### Pre-requisites: Python 3.10 - 3.12 (tested)
+Install `uv` if you haven't already:
 ```bash
-# Create a new virtual environment
-uv venv GO --python 3.13
-source GO/bin/activate
-# install required packages
-pip install --no-cache-dir -r requirements.txt
-MAX_JOBS=4 pip install flash-attn --no-build-isolation --no-cache-dir
+# On macOS and Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-#### Install GenomeOcean package
-
-from source:
+Create a virtual environment and install dependencies:
 ```bash
-# clone the repo
-git clone https://github.com/jgi-genomeocean/genomeocean
-cd genomeocean/
-export VLLM_WORKER_MULTIPROC_METHOD=spawn
-uv pip install -e .
+# Create a new virtual environment
+uv venv GO --python 3.12
+source GO/bin/activate
+
+# Install GenomeOcean package and dependencies
+# This will install all dependencies including vllm, torch, etc.
+uv pip install -e ".[all]"
+
+# Optional: Install flash-attention for better performance (requires CUDA build tools)
+MAX_JOBS=4 uv pip install flash-attn --no-build-isolation
+```
+
+#### Running Tests
+```bash
 python -m unittest unittests.py
 ```
 
