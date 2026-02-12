@@ -55,6 +55,7 @@ class SequenceGenerator:
         frequency_penalty=0.5,
         repetition_penalty=1.0,
         seed=123,
+        gpu_memory_utilization=0.6,
         ):
         assert promptfile or prompts, "prompts (A list of str) or promptfile (A file contains DNA sequences) must be provided"
         if prompts and promptfile:
@@ -72,12 +73,17 @@ class SequenceGenerator:
         self.frequency_penalty = frequency_penalty
         self.repetition_penalty = repetition_penalty
         self.seed = seed
+        self.gpu_memory_utilization = gpu_memory_utilization
         self._llm = None
 
     @property
     def llm(self):
         if self._llm is None:
-            self._llm = LLMUtils(model_dir=self.model_dir)
+            self._llm = LLMUtils(
+                model_dir=self.model_dir, 
+                model_max_length=self.max_seq_len, 
+                gpu_memory_utilization=self.gpu_memory_utilization
+            )
         return self._llm
 
     def _load_prompts(self):

@@ -46,10 +46,11 @@ def max_divisor_of_12(number):
 
 # main class
 class LLMUtils:
-    def __init__(self, model_dir, model_max_length=10240, is_classification_model=False):
+    def __init__(self, model_dir, model_max_length=10240, is_classification_model=False, gpu_memory_utilization=0.6):
         self.model_dir = model_dir # model name or path
         self.model_max_length = model_max_length
         self.is_classification_model = is_classification_model
+        self.gpu_memory_utilization = gpu_memory_utilization
         self._tokenizer = None
         self._model = None
         self._vllm_engine = None
@@ -315,9 +316,9 @@ class LLMUtils:
                 trust_remote_code=False,
                 seed=seed,
                 dtype=torch.bfloat16,
-                max_model_len=10240,
-                gpu_memory_utilization=0.6, # reduced from 0.8 for 4B stability
-                enforce_eager=True, # avoid CUDA graph capture hangs on aarch64
+                max_model_len=self.model_max_length,
+                gpu_memory_utilization=self.gpu_memory_utilization, # reduced from 0.8 for 4B stability
+                enforce_eager=False, # avoid CUDA graph capture hangs on aarch64
                 tensor_parallel_size=num_gpus,
             )
         

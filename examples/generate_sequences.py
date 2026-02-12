@@ -50,6 +50,7 @@ def generate_sequences(
             seed=123,
             sort_by_orf_length=False,
             out_format='fa',
+            gpu_memory_utilization=0.6,
             ):
     # generate sequences using a prompt file
     if max_seq_len >10240:
@@ -68,6 +69,7 @@ def generate_sequences(
                                 frequency_penalty=frequency_penalty,
                                 repetition_penalty=repetition_penalty,
                                 seed=seed,
+                                gpu_memory_utilization=gpu_memory_utilization,
                                 )
     else:
         seq_gen = SequenceGenerator(
@@ -83,6 +85,7 @@ def generate_sequences(
             frequency_penalty=frequency_penalty,
             repetition_penalty=repetition_penalty,
             seed=seed,
+            gpu_memory_utilization=gpu_memory_utilization,
         )
         all_generated = seq_gen.generate_sequences(prepend_prompt_to_output=True, max_repeats=max_repeats)
     seq_gen.save_sequences(all_generated, out_prefix=out_prefix, out_format=out_format)
@@ -120,6 +123,7 @@ def generate_sequences_long(
             frequency_penalty=0.5,
             repetition_penalty=1.0,
             seed=123,
+            gpu_memory_utilization=0.6,
             ):
     # generate the first round
     seq_gen = SequenceGenerator(
@@ -135,6 +139,7 @@ def generate_sequences_long(
         frequency_penalty=frequency_penalty,
         repetition_penalty=repetition_penalty,
         seed=seed,
+        gpu_memory_utilization=gpu_memory_utilization,
     )
     g_seqs = seq_gen.generate_sequences(add_prompt=True)
     # destroy the SequenceGenerator object to release memory
@@ -155,6 +160,7 @@ def generate_sequences_long(
             frequency_penalty=frequency_penalty,
             repetition_penalty=repetition_penalty,
             seed=seed,
+            gpu_memory_utilization=gpu_memory_utilization,
         )
         c_seqs = seq_gen.generate_sequences(prepend_prompt_to_output=False)
         del seq_gen
@@ -188,6 +194,7 @@ if __name__ == '__main__':
     parser.add_argument("--seed", type=int, default=123, help="random seed for sampling")
     parser.add_argument("--max_repeats", type=int, default=0, help="Maximum percentage of repeats")
     parser.add_argument("--sort_by_orf_length", action='store_true', help="Sort the sequences by ORF length")
+    parser.add_argument("--gpu_memory_utilization", type=float, default=0.6, help="GPU memory utilization")
     args = parser.parse_args()
     
     # print out the arguments to standard output
@@ -209,4 +216,5 @@ if __name__ == '__main__':
         max_repeats=args.max_repeats,
         sort_by_orf_length=args.sort_by_orf_length,
         out_format=args.out_format,
+        gpu_memory_utilization=args.gpu_memory_utilization,
     )
