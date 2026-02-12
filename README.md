@@ -29,9 +29,6 @@ source GO/bin/activate
 # This will install all dependencies including vllm, torch, etc.
 uv pip install -e ".[all]"
 
-# Optional: Install flash-attention for better performance (requires CUDA build tools)
-MAX_JOBS=4 uv pip install flash-attn --no-build-isolation
-```
 
 #### Running Tests
 ```bash
