@@ -17,6 +17,8 @@ packaging
 ninja
 setuptools
 wheel
+evaluate
+scikit-learn
 
 # CUDA bindings
 cuda-python
