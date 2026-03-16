@@ -46,8 +46,14 @@ From: nvcr.io/nvidia/vllm:25.09-py3
     . /genomeocean
 
 %runscript
-    echo "Welcome to the GenomeOcean container!"
-    exec /bin/bash "$@"
+    # Default entry point: the unified GenomeOcean inference CLI.
+    # Usage: apptainer run genomeocean.sif generate --model_dir pGenomeOcean/GenomeOcean-4B ...
+    # For an interactive shell: apptainer shell --nv genomeocean.sif
+    if [ "$#" -eq 0 ]; then
+        exec go-infer --help
+    else
+        exec go-infer "$@"
+    fi
 
 %labels
     Maintainer Zhong Wang

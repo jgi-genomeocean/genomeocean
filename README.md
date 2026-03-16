@@ -1,4 +1,4 @@
-# [GenomeOcean: An Efficient Genome Foundation Model Trained on Large-Scale Metagenomic Assemblies](https://www.biorxiv.org/content/10.1101/2025.01.30.635558v1)
+# GenomeOcean: An Efficient Genome Foundation Model Trained on Large-Scale Metagenomic Assemblies
 
 ![Figure 1](figures/Overview.jpeg)
 
@@ -49,23 +49,27 @@ GenomeOcean is compatible with all the standard HuggingFace APIs. We publish the
 
 We recommend using the `GenomeOcean-4B` model for general-purpose genome sequence analysis. The `GenomeOcean-4B-bgcFM` model is fine-tuned on BGC sequences and can be used for BGC-related tasks. The smaller models (`GenomeOcean-100M` and `GenomeOcean-500M`) can be used when GPU memory is limited, but the performance may be compromised.
 
-### 2.1. Sequence Embedding
-```bash
-cd genomeocean/examples
-python embedding_sequences.py \
-    --model_dir DOEJGI/GenomeOcean-4B \
-    --sequence_file ../sample_data/dna_sequences.txt \
-    --model_max_length 10240 \
-    --batch_size 10 \
-    --output_file outputs/embeddings.npy
+### 2.1 Unified CLI — `go-infer`
+
+After installation, the `go-infer` command is available with four sub-commands:
+
+```
+go-infer generate      # de-novo or prompt-conditioned sequence generation
+go-infer autocomplete  # complete a partial protein-coding gene + structure scoring
+go-infer embed         # compute embedding vectors from sequences
+go-infer score         # compute NLL loss for sequences or a whole genome
 ```
 
-### 2.2. Sequence Generation
+Run `go-infer <sub-command> --help` to see all options for each mode.
+
+#### 2.1.1 Sequence Generation
+
+Generate sequences conditioned on prompts from a file (`.txt`, `.fa`, or `.csv`):
+
 ```bash
-cd genomeocean/examples
-python generate_sequences.py \
-    --model_dir DOEJGI/GenomeOcean-4B \
-    --promptfile ../sample_data/dna_sequences.txt \
+go-infer generate \
+    --model_dir pGenomeOcean/GenomeOcean-4B \
+    --promptfile sample_data/dna_sequences.txt \
     --out_prefix outputs/generated \
     --out_format fa \
     --num 10 \
@@ -74,7 +78,6 @@ python generate_sequences.py \
     --temperature 1.3 \
     --top_k -1 \
     --top_p 0.7 \
-    --max_repeats 100 \
     --presence_penalty 0.5 \
     --frequency_penalty 0.5 \
     --repetition_penalty 1.0 \
@@ -82,9 +85,102 @@ python generate_sequences.py \
     --sort_by_orf_length
 ```
 
-### 2.3. more examples
+Omit `--promptfile` for **de-novo** (unconditional) generation. For sequences longer than 10,240 tokens, the CLI automatically switches to a chained long-generation mode.
 
-please see the folder `examples/`
+#### 2.1.2 Gene Autocomplete
+
+Complete a partial protein-coding gene and optionally score generated structures against a reference:
+
+```bash
+go-infer autocomplete \
+    --model_dir pGenomeOcean/GenomeOcean-4B \
+    --gen_id NZ_JAYXHC010000003.1 \
+    --start 157 --end 1698 \
+    --strand -1 \
+    --prompt_start 0 --prompt_end 600 \
+    --structure_start 150 --structure_end 500 \
+    --num 100 \
+    --min_seq_len 250 --max_seq_len 300 \
+    --foldmason_path ~/bin/foldmason \
+    --output_prefix outputs/gmp
+```
+
+Structure scoring requires [FoldMason](https://github.com/steineggerlab/foldmason). Omit `--foldmason_path` to skip it.
+
+#### 2.1.3 Sequence Embedding
+
+Compute mean-pool embedding vectors (saved as `.npy`):
+
+```bash
+go-infer embed \
+    --model_dir pGenomeOcean/GenomeOcean-4B \
+    --sequence_file sample_data/dna_sequences.txt \
+    --model_max_length 256 \
+    --batch_size 10 \
+    --out_file outputs/embeddings.npy
+```
+
+`--model_max_length` should be set to approximately `sequence_length_bp / 4`.
+
+#### 2.1.4 Loss / Perplexity Scoring
+
+**Per-sequence NLL loss** (scalar per sequence, printed to stdout or saved as `.pkl`):
+
+```bash
+go-infer score \
+    --model_dir pGenomeOcean/GenomeOcean-4B \
+    --sequence_file sample_data/dna_sequences.txt \
+    --out_prefix outputs/scores
+```
+
+**Genome-wide scan** (per-base token loss, output as `<prefix>.pkl`):
+
+```bash
+go-infer score \
+    --model_dir pGenomeOcean/GenomeOcean-4B-bgcFM \
+    --genome_file my_genome.fa.gz \
+    --mode genome \
+    --segment_size 50000 \
+    --overlap_size 5000 \
+    --use_reverse \
+    --out_prefix outputs/scan
+```
+
+Pass `--use_perplexity` to return exp(NLL) instead of raw NLL loss.
+
+---
+
+### 2.2 Python API
+
+All inference modes are also accessible as a Python class for programmatic use:
+
+```python
+from genomeocean.inference import GenomeOceanInference
+
+go = GenomeOceanInference(model_dir="pGenomeOcean/GenomeOcean-4B")
+
+# Generate sequences
+df = go.generate(promptfile="prompts.fa", num=10)
+go.save_sequences(df, out_prefix="outputs/gen", out_format="fa")
+
+# Embed
+import numpy as np
+emb = go.embed(sequence_file="seqs.txt", model_max_length=256)  # (N, hidden)
+np.save("embeddings.npy", emb)
+
+# Score
+scores = go.score(sequence_file="seqs.txt")          # per-sequence NLL
+scores = go.score(genome_file="genome.fa.gz", mode="genome")  # genome scan
+```
+
+The model is **lazy-loaded** on the first call — importing the class costs nothing.
+
+---
+
+### 2.3 More examples
+
+See the `examples/` folder for advanced usage including autocomplete with structure scoring and artificial sequence detection.
+
 
 
 ## 3. Contribute
@@ -93,7 +189,7 @@ Please submit pull requests and issues to the main branch.
 
 ## 4. Citation
 
-Zhou, Zhihan, et al. "GenomeOcean: An Efficient Genome Foundation Model Trained on Large-Scale Metagenomic Assemblies." bioRxiv (2025): 2025-01. (https://www.biorxiv.org/content/10.1101/2025.01.30.635558v1.full)
+[Uncovering the Genomic Manifold via Scalable Learning from the Global Microbiome](https://www.biorxiv.org/content/10.1101/2025.01.30.635558v2.full)
 
 ```
 @article{zhou2025genomeocean,

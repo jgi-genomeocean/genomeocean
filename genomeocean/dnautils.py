@@ -1,4 +1,5 @@
 import random
+import time
 import pandas as pd
 import numpy as np
 import gzip
@@ -16,18 +17,23 @@ import os, sys
 def get_nuc_seq_by_id(uid, start=0, end=0, db='nuccore'):
     # retrive nucleotide sequence from NCBI by id
     url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db={db}&id={uid}&rettype=fasta&retmode=text"
-    response = requests.get(url)
-    if response.status_code == 200:
-        sequence = ''.join((response.text).split("\n")[1:])
-        if start>0:
-            if end>0:
-                return sequence[start-1:end] # NCBI is 1-based
+    try:
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+        if response.status_code == 200:
+            sequence = ''.join((response.text).split("\n")[1:])
+            if start>0:
+                if end>0:
+                    return sequence[start-1:end] # NCBI is 1-based
+                else:
+                    return sequence[start-1:]
             else:
-                return sequence[start-1:]
+                return sequence 
         else:
-            return sequence 
-    else:
-        print("Error: ", response.status_code)
+            print("Error: ", response.status_code)
+            return None
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching from NCBI: {e}")
         return None
 
 def fetch_genome(genbank_id="U00096.3"):
@@ -168,21 +174,76 @@ def find_tandem_repeats_percentage(sequence, max_period_size=100):
     
     return percentage
 
-def fasta2pdb_api(seq, outfile):
-    # use esmfold web api for predicting protein structure
-    # use subprocess to run curl command
-    cmd = f'curl -X POST --data "{seq}" https://api.esmatlas.com/foldSequence/v1/pdb/ > {outfile} 2>/dev/null'
-    subprocess.run(cmd, shell=True) 
-    # check if query is successful, outfile should have non-zero size
-    if os.path.exists(outfile) and os.path.getsize(outfile) > 0:
-        return True
-    else:
-        raise Exception("Error in cmd '{cmd}': failed to generate pdb file")
-    
-def LDDT_scoring(query, target_pdb, foldmason_path='', debug=False):
+def fasta2pdb_api(seq, outfile, max_retries=3, retry_delay=10, backend='api'):
+    """Predict protein structure and write PDB to outfile.
 
-    # compute structure alignment score using foldmason
-    # check if foldmason_path is provided and exists
+    Parameters
+    ----------
+    seq : str
+        Amino-acid sequence to fold.
+    outfile : str
+        Path to write the PDB output.
+    max_retries : int
+        Number of retries (only used by 'api' backend).
+    retry_delay : int
+        Seconds between retries (only used by 'api' backend).
+    backend : str
+        'api'       — ESMFold web API (legacy, unreliable).
+        'esmfold'   — Local ESMFold (recommended).
+        'omegafold' — Local OmegaFold.
+        'colabfold' — Local ColabFold.
+
+    Returns True on success, False on failure.
+    """
+    if backend != 'api':
+        # Use local FoldingBackend
+        try:
+            from genomeocean.folding import FoldingBackend
+            folder = FoldingBackend(backend=backend)
+            return folder.predict_to_file(seq, outfile)
+        except Exception as e:
+            print(f"[fasta2pdb_api] Local backend '{backend}' failed: {e}")
+            return False
+
+    # Legacy API path with retry + PDB validation
+    for attempt in range(1, max_retries + 1):
+        cmd = f'curl -m 30 -s -X POST --data "{seq}" https://api.esmatlas.com/foldSequence/v1/pdb/ -o {outfile}'
+        subprocess.run(cmd, shell=True)
+        
+        # Validate: file must exist, be non-empty, and contain valid PDB records
+        if os.path.exists(outfile) and os.path.getsize(outfile) > 0:
+            with open(outfile, 'r') as f:
+                content = f.read(10000)  # read first 10k chars to bypass long headers
+            if 'ATOM' in content or 'MODEL' in content:
+                return True
+            else:
+                print(f"ESMfold attempt {attempt}/{max_retries}: returned invalid PDB (no ATOM records). Content preview: {content[:100]}")
+        else:
+            print(f"ESMfold attempt {attempt}/{max_retries}: empty or missing output file for outfile={outfile}")
+        
+        if attempt < max_retries:
+            print(f"Retrying in {retry_delay}s...")
+            time.sleep(retry_delay)
+    
+    print(f"ESMfold API failed after {max_retries} attempts for sequence (len={len(seq)}).")
+    return False
+    
+def LDDT_scoring(query, target_pdb, foldmason_path='', debug=False, backend='esmfold'):
+    """Compute structural lDDT by folding a query sequence and comparing to target_pdb.
+
+    Parameters
+    ----------
+    query : str
+        Amino-acid sequence to fold and compare.
+    target_pdb : str
+        Path to the reference PDB file.
+    foldmason_path : str
+        Path to the foldmason binary.
+    debug : bool
+        If True, return the raw subprocess result instead of the lDDT score.
+    backend : str
+        Folding backend to use: 'esmfold' (default), 'omegafold', 'colabfold', 'api'.
+    """
     if not foldmason_path:
         print("Foldmason path not provided")
         return None
@@ -195,15 +256,21 @@ def LDDT_scoring(query, target_pdb, foldmason_path='', debug=False):
     pdb_dir = 'lddt_pdbs/'
     
     subprocess.run(f'rm -rf {pdb_dir} && mkdir -p {pdb_dir}', shell=True)
-    # predict structure
-    fasta2pdb_api(query, pdb_dir+'query.pdb')
+    # predict structure using the specified backend
+    success = fasta2pdb_api(query, pdb_dir+'query.pdb', backend=backend)
+    if not success:
+        subprocess.run(f'rm -rf {temp_dir} {pdb_dir}', shell=True)
+        return None
     subprocess.run(['cp', target_pdb, pdb_dir])
     cmd = f'{foldmason_path} easy-msa {pdb_dir} results.m8 {temp_dir} --match-ratio 0.51 --filter-msa 1 --gap-open aa:10,nucl:10 --gap-extend aa:1,nucl:1 --report-paths 0 --report-mode 2'
     # run the command and capture the results, check if the command is successful
     try:
-        results = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"Error: {e}")
+        results = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+        if results.returncode != 0:
+            print(f"Foldmason Warning: non-zero exit ({results.returncode}). Output: {results.stderr.decode()}")
+            return None
+    except Exception as e:
+        print(f"Error executing foldmason: {e}")
         return None
     
     subprocess.run('rm -rf tmp/ pdbs/ results.m8*', shell=True)

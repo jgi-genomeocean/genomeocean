@@ -45,5 +45,8 @@ RUN rm -f /usr/lib/python3.*/EXTERNALLY-MANAGED && \
 # Clean up
 RUN rm -rf /workspace/build_temp
 
-# Set default command
-CMD ["/bin/bash"]
+# Expose the unified inference CLI as the default entry point.
+# Override with `docker run ... /bin/bash` for interactive debugging.
+# Usage: docker run --gpus all <image> generate --model_dir pGenomeOcean/GenomeOcean-4B ...
+ENTRYPOINT ["go-infer"]
+CMD ["--help"]

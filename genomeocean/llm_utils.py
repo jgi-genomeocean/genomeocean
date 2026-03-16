@@ -267,6 +267,95 @@ class LLMUtils:
    
         return per_token_losses
 
+    def compute_mean_loss_batch(self, sequences, batch_size=8):
+        """
+        Compute mean NLL loss for a list of sequences in batches using GPU.
+        Expects sequences to be strings. Returns a numpy numeric array of the mean token losses.
+        """
+        if not sequences:
+            return np.array([])
+            
+        # Reorder sequences by length to minimize padding waste
+        lengths = [len(seq) for seq in sequences]
+        idx = np.argsort(lengths)[::-1]  # Sort descending
+        sorted_sequences = [sequences[i] for i in idx]
+        
+        tokenizer = self.tokenizer
+        
+        # We need the transformers model here (like compute_sequence_perplexity)
+        model = transformers.AutoModelForCausalLM.from_pretrained(
+            self.model_dir,
+            trust_remote_code=True,
+            torch_dtype=torch.bfloat16,
+            attn_implementation="sdpa",
+            use_cache=False,
+        )
+        model.to("cuda")
+        model.eval()
+        
+        all_mean_losses = []
+        
+        print(f"Calculating mean loss for {len(sorted_sequences)} sequences with batch size {batch_size}...")
+        for i in tqdm.tqdm(range(0, len(sorted_sequences), batch_size), desc="calculating batched losses"):
+            batch_seqs = sorted_sequences[i:i+batch_size]
+            
+            # Tokenize batch with dynamic padding
+            encodings = tokenizer(
+                batch_seqs,
+                padding=True,
+                truncation=True,
+                max_length=self.model_max_length,
+                return_tensors="pt"
+            )
+            
+            input_ids = encodings["input_ids"].to("cuda")
+            attention_mask = encodings["attention_mask"].to("cuda")
+            labels = input_ids.clone()
+            
+            # Ignore padding in loss
+            labels[attention_mask == 0] = -100
+            
+            with torch.no_grad():
+                outputs = model(input_ids, attention_mask=attention_mask, labels=labels)
+                
+                # outputs.loss is the mean over the whole batch
+                # To get per-sequence loss, we calculate it manually from logits
+                logits = outputs.logits
+                
+                # Shift so that tokens < n predict n
+                shift_logits = logits[..., :-1, :].contiguous()
+                shift_labels = labels[..., 1:].contiguous()
+                
+                # Calculate loss
+                loss_fct = nn.CrossEntropyLoss(reduction="none")
+                
+                # Flatten everything for the loss function
+                # shift_logits: (batch_size * seq_len, vocab_size)
+                # shift_labels: (batch_size * seq_len,)
+                loss = loss_fct(shift_logits.view(-1, model.config.vocab_size), shift_labels.view(-1))
+                loss = loss.view(shift_labels.size())
+                
+                # Mean over non-ignored tokens for each sequence
+                # shift_labels == -100 are padding tokens
+                valid_mask = (shift_labels != -100).float()
+                # Sum the losses per sequence and divide by sequence length
+                seq_loss = (loss * valid_mask).sum(dim=1) / valid_mask.sum(dim=1)
+                
+                all_mean_losses.extend(seq_loss.cpu().numpy().tolist())
+                
+        # To avoid extra VRAM usage, clean up
+        del model
+        import gc
+        gc.collect()
+        torch.cuda.empty_cache()
+                
+        # Reorder back to original order
+        final_losses = np.zeros(len(sequences))
+        for original_idx, sorted_idx in enumerate(idx):
+            final_losses[sorted_idx] = all_mean_losses[original_idx]
+            
+        return final_losses
+
     def generate(
         self, 
         prompts,

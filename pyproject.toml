@@ -47,7 +47,8 @@ Homepage = "https://github.com/jgi-genomeocean/genomeocean"
 
 [project.scripts]
 go-generate = "go_generate:main"
-go-scan = "go_scan:main"
+go-scan     = "go_scan:main"
+go-infer    = "genomeocean.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["genomeocean*"]

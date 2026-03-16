@@ -85,6 +85,7 @@ def chk_gen_structure(
     structure_end=0,
     model_dir='',
     foldmason_path='',
+    max_repeats=0,
     **kwargs,
 ):
     gene = get_nuc_seq_by_id(gen_id, start=start, end=end)
@@ -136,9 +137,13 @@ def chk_gen_structure(
         presence_penalty=0.5, 
         frequency_penalty=0.5, 
         repetition_penalty=1.0, 
-        seed=1234
+        seed=1234,
+        filter_compression=kwargs.get('filter_compression', False),
+        compression_threshold=kwargs.get('compression_threshold', 0.33),
+        filter_loss=kwargs.get('filter_loss', False),
+        loss_threshold=kwargs.get('loss_threshold', 3.5),
     )
-    g_seqs = seq_gen.generate_sequences(prepend_prompt_to_output=True, max_repeats=100)
+    g_seqs = seq_gen.generate_sequences(prepend_prompt_to_output=True, max_repeats=max_repeats)
     print(f'total {g_seqs.shape[0]} sequences were generated.')  
     os.remove('tmp_prompts.csv')
 
@@ -175,6 +180,11 @@ def main():
     parser.add_argument("--max_seq_len", type=int, default=300, help="maximum sequence length")
     parser.add_argument("--foldmason_path", default='', help="foldmason path")
     parser.add_argument("--output_prefix", default='generated', help="output prefix")
+    parser.add_argument("--filter_compression", action="store_true", help="enable compression filter")
+    parser.add_argument("--compression_threshold", type=float, default=0.33, help="compression threshold")
+    parser.add_argument("--filter_loss", action="store_true", help="enable loss filter")
+    parser.add_argument("--loss_threshold", type=float, default=3.5, help="loss threshold")
+    parser.add_argument("--max_repeats", type=int, default=0, help="maximum repeat percentage (0 to disable)")
     args = parser.parse_args()
     mutate_prompt = True if args.mutate_prompt == 1 else False
 
@@ -206,7 +216,12 @@ def main():
         num=args.num,
         min_seq_len=args.min_seq_len,
         max_seq_len=args.max_seq_len,
-        foldmason_path=args.foldmason_path
+        foldmason_path=args.foldmason_path,
+        max_repeats=args.max_repeats,
+        filter_compression=args.filter_compression,
+        compression_threshold=args.compression_threshold,
+        filter_loss=args.filter_loss,
+        loss_threshold=args.loss_threshold
     )
     # save the results to a file
     generated.to_csv(args.output_prefix + '.csv', sep='\t', index=False)
