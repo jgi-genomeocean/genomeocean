@@ -6,6 +6,7 @@ Example usage:
 from genomeocean.llm_utils import LLMUtils
 
 """
+import math
 import os
 import numpy as np
 import transformers
@@ -193,7 +194,7 @@ class LLMUtils:
                     break
             
             losses = torch.stack(nlls).mean().item()
-            score = torch.exp(losses).item() if use_ppl else losses
+            score = math.exp(losses) if use_ppl else losses
             perplexities[i] = score
         
         return perplexities

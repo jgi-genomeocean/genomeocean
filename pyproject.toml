@@ -31,6 +31,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+test = [
+    "pytest>=7.0",
+    "biopython",
+    "pandas",
+    "numpy",
+]
 generation = [
     "vllm>=0.15.1",
 ]

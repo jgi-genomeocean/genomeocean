@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='genomeocean',
-    version='0.5.1',
+    version='0.6.0',
     author='Zhong Wang',
     author_email='zhongwang@lbl.gov',
     description='A Python library for GenomeOcean inference and fine-tuning.',

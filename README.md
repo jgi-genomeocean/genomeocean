@@ -81,11 +81,21 @@ go-infer generate \
     --presence_penalty 0.5 \
     --frequency_penalty 0.5 \
     --repetition_penalty 1.0 \
+    --filter_compression \
+    --compression_threshold 0.33 \
+    --filter_loss \
+    --loss_threshold 3.5 \
     --seed 123 \
     --sort_by_orf_length
 ```
 
 Omit `--promptfile` for **de-novo** (unconditional) generation. For sequences longer than 10,240 tokens, the CLI automatically switches to a chained long-generation mode.
+
+**Enhanced Generation Options:**
+- `--filter_compression`: If enabled, filters out generated sequences that contain low-complexity repeats using a COMPRESSION_THRESHOLD (default: disabled). Do not use this on short sequences.
+- `--compression_threshold COMPRESSION_THRESHOLD`: The compression threshold. Only effective if `--filter_compression` is enabled (default: 0.33). Suggested value: no more than 0.33 (sequences can be compressed by 3 times).
+- `--filter_loss`: Filter sequences below `--loss_threshold` (default: disabled).
+- `--loss_threshold LOSS_THRESHOLD`: Use this option to remove sequences that have low loss scores (greedy generation). Only effective if `--filter_loss` is enabled (default: 3.5). Suggested value: no more than 3.5.
 
 #### 2.1.2 Gene Autocomplete
 
@@ -102,6 +112,10 @@ go-infer autocomplete \
     --num 100 \
     --min_seq_len 250 --max_seq_len 300 \
     --foldmason_path ~/bin/foldmason \
+    --filter_compression \
+    --compression_threshold 0.33 \
+    --filter_loss \
+    --loss_threshold 3.5 \
     --output_prefix outputs/gmp
 ```
 
@@ -160,7 +174,14 @@ from genomeocean.inference import GenomeOceanInference
 go = GenomeOceanInference(model_dir="pGenomeOcean/GenomeOcean-4B")
 
 # Generate sequences
-df = go.generate(promptfile="prompts.fa", num=10)
+df = go.generate(
+    promptfile="prompts.fa", 
+    num=10, 
+    filter_compression=True,
+    compression_threshold=0.33, 
+    filter_loss=True, 
+    loss_threshold=3.5
+)
 go.save_sequences(df, out_prefix="outputs/gen", out_format="fa")
 
 # Embed

@@ -700,6 +700,9 @@ class GenomeOceanInference:
         if sequence_file is not None and sequences is None:
             sequences = _load_sequences_from_file(sequence_file)
 
+        if not sequences:
+            raise ValueError("No sequences found in the input file.")
+
         llm = self._get_llm_utils()
 
         if use_token_scores:

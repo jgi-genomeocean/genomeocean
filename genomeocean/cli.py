@@ -136,7 +136,7 @@ def _cmd_autocomplete(args):
         loss_threshold=args.loss_threshold,
     )
 
-    out_csv = args.output_prefix + ".csv"
+    out_csv = args.out_prefix + ".csv"
     df.to_csv(out_csv, sep="\t", index=False)
     print(f"Autocomplete results → {out_csv}")
 
@@ -162,9 +162,10 @@ def _cmd_embed(args):
         batch_size=args.batch_size,
     )
 
-    os.makedirs(os.path.dirname(os.path.abspath(args.out_file)), exist_ok=True)
-    np.save(args.out_file, embeddings)
-    print(f"Embeddings {embeddings.shape} → {args.out_file}")
+    out_path = args.out_prefix if args.out_prefix.endswith(".npy") else args.out_prefix + ".npy"
+    os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
+    np.save(out_path, embeddings)
+    print(f"Embeddings {embeddings.shape} → {out_path}")
 
 
 # ---------------------------------------------------------------------------
@@ -216,6 +217,9 @@ def _parser_generate(sub):
     p.add_argument("--model_dir", required=True, help="Model name or path")
     p.add_argument("--promptfile", default=None,
                    help="Prompt file (.txt / .fa / .csv). Omit for de-novo generation.")
+    p.add_argument("--prompts", nargs="+", default=None,
+                   help="One or more inline prompt sequences (DNA strings). "
+                        "Ignored when --promptfile is given.")
     p.add_argument("--out_prefix", default="outputs/generated", help="Output file prefix")
     p.add_argument("--out_format", default="fa", choices=["fa", "txt"],
                    help="Output format")
@@ -283,7 +287,7 @@ def _parser_autocomplete(sub):
     p.add_argument("--compression_threshold", type=float, default=0.33)
     p.add_argument("--filter_loss", action="store_true")
     p.add_argument("--loss_threshold", type=float, default=3.5)
-    p.add_argument("--output_prefix", default="outputs/autocomplete")
+    p.add_argument("--out_prefix", default="outputs/autocomplete")
     p.add_argument("--gpu_memory_utilization", type=float, default=0.6)
     p.set_defaults(func=_cmd_autocomplete)
     return p
@@ -301,8 +305,8 @@ def _parser_embed(sub):
     p.add_argument("--model_max_length", type=int, default=256,
                    help="Token context length (set to bp_length / 4, max 10240)")
     p.add_argument("--batch_size", type=int, default=50)
-    p.add_argument("--out_file", default="outputs/embeddings.npy",
-                   help="Output .npy file path")
+    p.add_argument("--out_prefix", default="outputs/embeddings",
+                   help="Output prefix (.npy extension added automatically)")
     p.add_argument("--gpu_memory_utilization", type=float, default=0.6)
     p.set_defaults(func=_cmd_embed)
     return p
