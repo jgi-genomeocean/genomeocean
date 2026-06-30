@@ -2,8 +2,12 @@
 # For use with PyTorch 2.9+ / CUDA 12.9+ (provided by container or system)
 
 # Primary Dependencies
-vllm>=0.15.1
-transformers>=4.56.0
+# vLLM 0.24+ ships the V1 engine as default (V0 was removed in 0.11).
+# transformers 5.12.1+ is the lowest version we have validated against the
+# V1 engine + GenomeOcean checkpoints (with the PreTrainedTokenizerFast
+# workaround in genomeocean/llm_utils.py for MistralCommonBackend).
+vllm>=0.24.0
+transformers>=5.12.1
 peft
 accelerate
 bitsandbytes

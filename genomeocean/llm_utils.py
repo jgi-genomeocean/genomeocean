@@ -15,6 +15,12 @@ import torch.nn as nn
 import tqdm
 import pandas as pd
 from vllm import LLM, SamplingParams
+# vLLM V1 + transformers>=5.0 compatibility:
+# transformers 5.x routes model_type=mistral through MistralCommonBackend which
+# requires a tekken.json that GenomeOcean checkpoints don't ship. We work
+# around this by constructing vLLM with skip_tokenizer_init=True and loading
+# the GenomeOcean tokenizer ourselves with PreTrainedTokenizerFast.
+from transformers import PreTrainedTokenizerFast
 
 from sklearn.preprocessing import normalize
 
@@ -54,6 +60,7 @@ class LLMUtils:
         self._tokenizer = None
         self._model = None
         self._vllm_engine = None
+        self._vllm_tokenizer = None  # PreTrainedTokenizerFast for vLLM V1 path
 
         self.gpus = torch.cuda.device_count()
         if self.gpus > 1: # ensure we can use all GPUs on a node allowed by max heads (12)
@@ -83,6 +90,7 @@ class LLMUtils:
                 # but we can at least try to clear references.
                 del self._vllm_engine
                 self._vllm_engine = None
+                self._vllm_tokenizer = None
                 gc.collect()
                 torch.cuda.empty_cache()
 
@@ -318,19 +326,42 @@ class LLMUtils:
                 dtype=torch.bfloat16,
                 max_model_len=self.model_max_length,
                 gpu_memory_utilization=self.gpu_memory_utilization, # reduced from 0.8 for 4B stability
-                enforce_eager=False, # avoid CUDA graph capture hangs on aarch64
+                # enforce_eager=True disables CUDA graph capture entirely.
+                # We saw CUDA graph capture hangs on aarch64 (GB10) with vLLM V0
+                # historically; the value below honours the original intent
+                # (the prior `enforce_eager=False` was a bug — comment said
+                # "avoid CUDA graph capture hangs" but the value enabled them).
+                # TODO(vllm-v1): re-test enforce_eager=False on GB10 with vLLM V1 +
+                # CUDA 13; flip back to False if graph capture is stable.
+                enforce_eager=True,
                 tensor_parallel_size=num_gpus,
+                # V1 + transformers>=5.0: defer to PreTrainedTokenizerFast below.
+                skip_tokenizer_init=True,
             )
+            # Load the GenomeOcean tokenizer ourselves to bypass
+            # MistralCommonBackend (transformers>=5.0 routes mistral models
+            # through it; GenomeOcean checkpoints don't ship tekken.json).
+            self._vllm_tokenizer = PreTrainedTokenizerFast.from_pretrained(self.model_dir)
         
         llm = self._vllm_engine
 
-        # Initialize the tokenizer separately
-        tokenizer = self.tokenizer
+        # vLLM V1 + skip_tokenizer_init=True path: we MUST feed token ids, not
+        # strings. Use the PreTrainedTokenizerFast loaded above (same vocab as
+        # the transformers AutoTokenizer) for both encoding the prompt and
+        # decoding the output.
+        tokenizer = self._vllm_tokenizer
         prompts = ["[CLS]"+p for p in prompts]
         #prompt_token_ids = tokenizer(prompts, add_special_tokens=False)["input_ids"]
 
+        # Build the V1-style prompt dicts. add_special_tokens=False because we
+        # already prepend "[CLS]" textually above (preserves prior behaviour).
+        prompt_inputs = [
+            {"prompt_token_ids": tokenizer.encode(p, add_special_tokens=False)}
+            for p in prompts
+        ]
+
         # Get all valid token IDs except token 8 that corresponding to 'N'
-        vocab_size = self.tokenizer.vocab_size
+        vocab_size = tokenizer.vocab_size
         allowed_tokens = [i for i in range(vocab_size) if i != 8]
 
         sampling_params = SamplingParams(
@@ -352,9 +383,9 @@ class LLMUtils:
         generated_sequences = []
         if num_generation_from_each_prompt >= 100:
             # If num_generation_from_each_prompt is greater than 100, generate sequences for each prompt one by one to optimize speed
-            for prompt in prompts:
+            for prompt_input in prompt_inputs:
                 all_outputs = llm.generate(
-                    prompts=prompt,
+                    prompts=[prompt_input],
                     sampling_params=sampling_params,
                 )
 
@@ -366,7 +397,7 @@ class LLMUtils:
         else:
             # Otherwise, directly use the vllm generate function
             all_outputs = llm.generate(
-                prompts=prompts,
+                prompts=prompt_inputs,
                 sampling_params=sampling_params,
             )
             

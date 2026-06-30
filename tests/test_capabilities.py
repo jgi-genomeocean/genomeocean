@@ -13,7 +13,7 @@ class TestGenomeOceanCapabilities(unittest.TestCase):
         from genomeocean.embedding import llm_embed_sequences
         print("\nTesting Embedding...")
 
-        model_name = "DOEJGI/GenomeOcean-100M" # Use a smaller model for testing if available
+        model_name = "pGenomeOcean/GenomeOcean-100M" # Use a smaller model for testing if available
         # Check if environment variable for model path is set, otherwise use default
         if "GENOMEOCEAN_MODEL_PATH" in os.environ:
              model_name = os.environ["GENOMEOCEAN_MODEL_PATH"]
@@ -28,7 +28,7 @@ class TestGenomeOceanCapabilities(unittest.TestCase):
         from genomeocean.generation import SequenceGenerator
         print("\nTesting Generation...")
 
-        model_name = "DOEJGI/GenomeOcean-100M"
+        model_name = "pGenomeOcean/GenomeOcean-100M"
         if "GENOMEOCEAN_MODEL_PATH" in os.environ:
              model_name = os.environ["GENOMEOCEAN_MODEL_PATH"]
 

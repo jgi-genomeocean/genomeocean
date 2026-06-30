@@ -1,5 +1,7 @@
-# Use official NVIDIA vLLM container for CUDA 13 and Blackwell support
-FROM nvcr.io/nvidia/vllm:25.09-py3
+# Use official NVIDIA vLLM container for CUDA 13 and Blackwell support.
+# Bumped from 25.09-py3 (vLLM 0.10, V0-defaulted) to 26.06-py3 which ships
+# vLLM 0.24 with the V1 engine as the default. V0 was removed in vLLM 0.11.
+FROM nvcr.io/nvidia/vllm:26.06-py3
 
 # Set up environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -8,7 +10,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PATH="/usr/bin:$PATH" \
     CUDA_HOME="/usr/local/cuda" \
     VLLM_WORKER_MULTIPROC_METHOD=spawn \
-    VLLM_USE_V1=0 \
     HF_HOME="/workspace/model_cache" \
     TMPDIR="/workspace/tmp" \
     LD_LIBRARY_PATH="/usr/local/cuda/lib64:${LD_LIBRARY_PATH}"
