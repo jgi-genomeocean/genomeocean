@@ -360,10 +360,10 @@ class LLMUtils:
             for p in prompts
         ]
 
-        # Get all valid token IDs except token 8 that corresponding to 'N'
-        vocab_size = tokenizer.vocab_size
-        allowed_tokens = [i for i in range(vocab_size) if i != 8]
-
+        # Suppress token 8 ('N') at logit level.
+        # Previously used allowed_token_ids=[all tokens except 8], but vLLM V1's
+        # logit-bias backend rejects lists > 1024 entries. logit_bias={8: -inf}
+        # is equivalent and has no size limit.
         sampling_params = SamplingParams(
             n=num_generation_from_each_prompt,
             temperature=temperature, 
@@ -376,7 +376,7 @@ class LLMUtils:
             presence_penalty=presence_penalty,
             frequency_penalty=frequency_penalty,
             repetition_penalty=repetition_penalty,
-            allowed_token_ids=allowed_tokens,  # This blocks token 8
+            logit_bias={8: float('-inf')},  # Block token 8 ('N'); replaces V0 allowed_token_ids
         )
         
         # Generate sequences using prompt_token_ids
