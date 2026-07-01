@@ -1,22 +1,24 @@
 # Check if the model works correctly by embedding sequences and generating new sequences
 
 import torch
-from transformers import AutoModel, AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModel, PreTrainedTokenizerFast
 from genomeocean.generation import SequenceGenerator
 
 
-# Step 1: Load the tokenizer
-tokenizer = AutoTokenizer.from_pretrained(
-    "DOEJGI/GenomeOcean-4B",
-    trust_remote_code=True,
+# Step 1: Load the tokenizer.
+# Note: transformers>=5.0 routes mistral-architecture models through
+# MistralCommonBackend via AutoTokenizer, which fails for GenomeOcean
+# (no tekken.json). Use PreTrainedTokenizerFast directly to bypass that path.
+tokenizer = PreTrainedTokenizerFast.from_pretrained(
+    "pGenomeOcean/GenomeOcean-4B",
     padding_side="left",
 )
 
 # Step 2: Load the model
 model = AutoModel.from_pretrained(
-    "DOEJGI/GenomeOcean-4B",
+    "pGenomeOcean/GenomeOcean-4B",
     torch_dtype=torch.bfloat16,
-    attn_implementation="flash_attention_2",
+    attn_implementation="sdpa",
 ).to("cuda")
 
 print("Model and tokenizer downloaded successfully!")
@@ -44,7 +46,7 @@ assert embedding.shape == (2, 3072), "Embedding shape is not (2, 3072), sth. is 
 
 # Step 4: Sequence generation
 seq_gen = SequenceGenerator(
-    model_dir='DOEJGI/GenomeOcean-4B',
+    model_dir='pGenomeOcean/GenomeOcean-4B',
     prompts=[sequences[0]],
     num=1,
     min_seq_len=10,

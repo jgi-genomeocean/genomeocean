@@ -19,9 +19,14 @@ logger = logging.getLogger(__name__)
 
 # GenomeOcean Model Token Limits - Centralized configuration
 MODEL_TOKEN_LIMITS = {
+    'pGenomeOcean/GenomeOcean-100M': 1024,
+    'pGenomeOcean/GenomeOcean-500M': 1024,
+    'pGenomeOcean/GenomeOcean-4B': 10240,
+    # Legacy aliases kept for backward compatibility with users still
+    # referencing the old DOEJGI/* namespace.
     'DOEJGI/GenomeOcean-100M': 1024,
     'DOEJGI/GenomeOcean-500M': 1024,
-    'DOEJGI/GenomeOcean-4B': 10240
+    'DOEJGI/GenomeOcean-4B': 10240,
 }
 
 def llm_embed_sequences(dna_sequences,

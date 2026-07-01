@@ -20,7 +20,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "transformers>=4.56.0",
+    "transformers>=5.12.1",
     "peft",
     "accelerate",
     "pandas",
@@ -38,10 +38,14 @@ test = [
     "numpy",
 ]
 generation = [
-    "vllm>=0.15.1",
+    # vLLM 0.24+ ships the V1 engine as default (V0 removed in 0.11).
+    # ninja is required for FlashInfer JIT compilation on aarch64/GB10.
+    "vllm>=0.24.0",
+    "ninja",
 ]
 all = [
-    "vllm>=0.15.1",
+    "vllm>=0.24.0",
+    "ninja",
     "bitsandbytes",
     "pyrodigal",
     "cuda-python",

@@ -1,0 +1,250 @@
+{
+  "label": "v1",
+  "model": "DOEJGI/GenomeOcean-4B",
+  "transformers_version": "5.6.0",
+  "torch_version": "2.13.0a0+8145d630e8.nv26.06",
+  "warmup": 2,
+  "measure": 3,
+  "configs": [
+    {
+      "seq_len": 1024,
+      "batch": 1,
+      "tokens_per_pass": 1024,
+      "status": "ok",
+      "raw": [
+        {
+          "iter": 0,
+          "wall_s": 0.058695978004834615,
+          "tokens": 1024,
+          "tok_per_s": 17445.829080753305,
+          "peak_vram_gb": 8.030699729919434
+        },
+        {
+          "iter": 1,
+          "wall_s": 0.047970467996492516,
+          "tokens": 1024,
+          "tok_per_s": 21346.466748560226,
+          "peak_vram_gb": 8.036559104919434
+        },
+        {
+          "iter": 2,
+          "wall_s": 0.047927865001838654,
+          "tokens": 1024,
+          "tok_per_s": 21365.44158519718,
+          "peak_vram_gb": 8.036559104919434
+        }
+      ],
+      "summary": {
+        "n_iters": 3,
+        "wall_s_median": 0.047970467996492516,
+        "wall_s_mean": 0.05153143700105526,
+        "wall_s_stdev": 0.006204711081099192,
+        "tok_per_s_median": 21346.466748560226,
+        "tok_per_s_mean": 20052.579138170237,
+        "peak_vram_gb_max": 8.036559104919434
+      }
+    },
+    {
+      "seq_len": 1024,
+      "batch": 8,
+      "tokens_per_pass": 8192,
+      "status": "ok",
+      "raw": [
+        {
+          "iter": 0,
+          "wall_s": 0.3694231840054272,
+          "tokens": 8192,
+          "tok_per_s": 22175.110698736364,
+          "peak_vram_gb": 8.897994041442871
+        },
+        {
+          "iter": 1,
+          "wall_s": 0.3651244119973853,
+          "tokens": 8192,
+          "tok_per_s": 22436.188134302734,
+          "peak_vram_gb": 8.939009666442871
+        },
+        {
+          "iter": 2,
+          "wall_s": 0.3664021380027407,
+          "tokens": 8192,
+          "tok_per_s": 22357.948140408294,
+          "peak_vram_gb": 8.939009666442871
+        }
+      ],
+      "summary": {
+        "n_iters": 3,
+        "wall_s_median": 0.3664021380027407,
+        "wall_s_mean": 0.3669832446685177,
+        "wall_s_stdev": 0.0022075153254369323,
+        "tok_per_s_median": 22357.948140408294,
+        "tok_per_s_mean": 22323.082324482464,
+        "peak_vram_gb_max": 8.939009666442871
+      }
+    },
+    {
+      "seq_len": 1024,
+      "batch": 32,
+      "tokens_per_pass": 32768,
+      "status": "ok",
+      "raw": [
+        {
+          "iter": 0,
+          "wall_s": 1.4181638930022018,
+          "tokens": 32768,
+          "tok_per_s": 23105.933074231165,
+          "peak_vram_gb": 11.892500877380371
+        },
+        {
+          "iter": 1,
+          "wall_s": 1.4179883550023078,
+          "tokens": 32768,
+          "tok_per_s": 23108.793442768907,
+          "peak_vram_gb": 12.033125877380371
+        },
+        {
+          "iter": 2,
+          "wall_s": 1.4186661779967835,
+          "tokens": 32768,
+          "tok_per_s": 23097.752317088292,
+          "peak_vram_gb": 12.033125877380371
+        }
+      ],
+      "summary": {
+        "n_iters": 3,
+        "wall_s_median": 1.4181638930022018,
+        "wall_s_mean": 1.4182728086670977,
+        "wall_s_stdev": 0.0003517925091652678,
+        "tok_per_s_median": 23105.933074231165,
+        "tok_per_s_mean": 23104.15961136279,
+        "peak_vram_gb_max": 12.033125877380371
+      }
+    },
+    {
+      "seq_len": 1024,
+      "batch": 64,
+      "tokens_per_pass": 65536,
+      "status": "ok",
+      "raw": [
+        {
+          "iter": 0,
+          "wall_s": 2.828170645996579,
+          "tokens": 65536,
+          "tok_per_s": 23172.57627037802,
+          "peak_vram_gb": 15.971114158630371
+        },
+        {
+          "iter": 1,
+          "wall_s": 2.8268973779995576,
+          "tokens": 65536,
+          "tok_per_s": 23183.01347266319,
+          "peak_vram_gb": 16.15861415863037
+        },
+        {
+          "iter": 2,
+          "wall_s": 2.8274915299989516,
+          "tokens": 65536,
+          "tok_per_s": 23178.141934177358,
+          "peak_vram_gb": 16.15861415863037
+        }
+      ],
+      "summary": {
+        "n_iters": 3,
+        "wall_s_median": 2.8274915299989516,
+        "wall_s_mean": 2.827519851331696,
+        "wall_s_stdev": 0.0006371062874246254,
+        "tok_per_s_median": 23178.141934177358,
+        "tok_per_s_mean": 23177.910559072858,
+        "peak_vram_gb_max": 16.15861415863037
+      }
+    },
+    {
+      "seq_len": 10240,
+      "batch": 1,
+      "tokens_per_pass": 10240,
+      "status": "ok",
+      "raw": [
+        {
+          "iter": 0,
+          "wall_s": 0.5212874330027262,
+          "tokens": 10240,
+          "tok_per_s": 19643.67324379072,
+          "peak_vram_gb": 9.522116661071777
+        },
+        {
+          "iter": 1,
+          "wall_s": 0.5198973590013338,
+          "tokens": 10240,
+          "tok_per_s": 19696.19545609911,
+          "peak_vram_gb": 9.522116661071777
+        },
+        {
+          "iter": 2,
+          "wall_s": 0.521566174000327,
+          "tokens": 10240,
+          "tok_per_s": 19633.17506091486,
+          "peak_vram_gb": 9.522116661071777
+        }
+      ],
+      "summary": {
+        "n_iters": 3,
+        "wall_s_median": 0.5212874330027262,
+        "wall_s_mean": 0.520916988668129,
+        "wall_s_stdev": 0.0008939561672657734,
+        "tok_per_s_median": 19643.67324379072,
+        "tok_per_s_mean": 19657.681253601564,
+        "peak_vram_gb_max": 9.522116661071777
+      }
+    },
+    {
+      "seq_len": 10240,
+      "batch": 8,
+      "tokens_per_pass": 81920,
+      "status": "ok",
+      "raw": [
+        {
+          "iter": 0,
+          "wall_s": 4.103096792001452,
+          "tokens": 81920,
+          "tok_per_s": 19965.407630571688,
+          "peak_vram_gb": 17.820059776306152
+        },
+        {
+          "iter": 1,
+          "wall_s": 4.102330755995354,
+          "tokens": 81920,
+          "tok_per_s": 19969.135809022217,
+          "peak_vram_gb": 18.230216026306152
+        },
+        {
+          "iter": 2,
+          "wall_s": 4.102286881003238,
+          "tokens": 81920,
+          "tok_per_s": 19969.349383962635,
+          "peak_vram_gb": 18.230216026306152
+        }
+      ],
+      "summary": {
+        "n_iters": 3,
+        "wall_s_median": 4.102330755995354,
+        "wall_s_mean": 4.102571476333348,
+        "wall_s_stdev": 0.00045546533029419976,
+        "tok_per_s_median": 19969.135809022217,
+        "tok_per_s_mean": 19967.964274518847,
+        "peak_vram_gb_max": 18.230216026306152
+      }
+    },
+    {
+      "seq_len": 10240,
+      "batch": 32,
+      "tokens_per_pass": 327680,
+      "status": "oom"
+    },
+    {
+      "seq_len": 10240,
+      "batch": 64,
+      "tokens_per_pass": 655360,
+      "status": "oom"
+    }
+  ]
+}
