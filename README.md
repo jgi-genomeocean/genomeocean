@@ -35,6 +35,50 @@ uv pip install -e ".[all]"
 python -m unittest unittests.py
 ```
 
+
+## 1.3 Upgrading to vLLM V1 (migration guide)
+
+As of this release, GenomeOcean runs on the **vLLM V1 engine** (vLLM ≥ 0.24) with
+**transformers ≥ 5.12**. The V1 engine is significantly faster for generation — on NVIDIA
+A100 (GenomeOcean-4B) we measured **1.1×–3.7× higher generation throughput** than the old V0
+engine, with much better multi-GPU scaling (6.4× vs 2.4× going from 1→4 GPUs at tensor
+parallelism). Embedding throughput is unchanged. See `benchmarks/BENCHMARK_REPORT.md` for the
+full numbers.
+
+**If you use the `genomeocean` package API** (`LLMUtils`, the embedding/generation classes, or
+the `go_generate.py` / `go_scan.py` command-line tools): **no code changes are required.** The
+public API is unchanged and has been smoke-tested end-to-end on V1.
+
+**Two things to check when upgrading:**
+
+1. **Remove `VLLM_USE_V1=0`.** This environment variable forced the old V0 engine and no longer
+   exists in vLLM ≥ 0.11 — leaving it set will cause errors. We have removed it from the
+   Docker/Apptainer images; delete it from any of your own shell scripts or job files.
+
+2. **Use `PreTrainedTokenizerFast`, not `AutoTokenizer`, if you load the tokenizer directly.**
+   Under transformers ≥ 5.0, `AutoTokenizer.from_pretrained("pGenomeOcean/...")` can be routed
+   to the MistralCommon backend (GenomeOcean ships a BPE tokenizer, not a `tekken.json`), which
+   fails. The package handles this internally; downstream code that loads the tokenizer itself
+   should switch:
+
+   ```python
+   # Before (may fail on transformers >= 5.0)
+   from transformers import AutoTokenizer
+   tok = AutoTokenizer.from_pretrained("pGenomeOcean/GenomeOcean-4B")
+
+   # After
+   from transformers import PreTrainedTokenizerFast
+   tok = PreTrainedTokenizerFast.from_pretrained("pGenomeOcean/GenomeOcean-4B")
+   ```
+
+**Removed V0-only features.** vLLM V1 no longer supports `best_of`, `use_beam_search`,
+per-request `logits_processors`, or GPU↔CPU KV-cache swap. GenomeOcean does not use any of
+these, but if your own code passes them to vLLM directly, remove them.
+
+**Note:** the package sets `enforce_eager=True` (CUDA graphs disabled) to avoid a CUDA-graph
+capture hang seen on some aarch64 platforms (e.g. GB10). On x86/A100 you may set it back to
+`False` for extra speed if generation is stable in your environment.
+
 ## 2. Usage
 
 GenomeOcean is compatible with all the standard HuggingFace APIs. We publish the following checkpoints on HuggingFace:
