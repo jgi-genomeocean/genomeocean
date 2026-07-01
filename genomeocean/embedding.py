@@ -101,13 +101,27 @@ def llm_embed_sequences(dna_sequences,
     # --- Load Model and Tokenizer ---
     try:
         logger.info("Loading tokenizer...")
-        tokenizer = transformers.AutoTokenizer.from_pretrained(
-            model_name_or_path,
-            cache_dir=None,
-            model_max_length=model_max_length,
-            padding_side="left", # Pad on left for decoder-only or encoder-decoder models if needed
-            use_fast=True,
-        )
+        # transformers>=5.0 may route AutoTokenizer to the MistralCommon backend
+        # (GenomeOcean ships a BPE tokenizer, not a tekken.json), which fails on
+        # some environments. Try AutoTokenizer first, validate it tokenizes DNA,
+        # and fall back to PreTrainedTokenizerFast otherwise.
+        try:
+            tokenizer = transformers.AutoTokenizer.from_pretrained(
+                model_name_or_path,
+                cache_dir=None,
+                model_max_length=model_max_length,
+                padding_side="left", # Pad on left for decoder-only or encoder-decoder models if needed
+                use_fast=True,
+            )
+            _ = tokenizer.encode("ATGC")  # sanity check; MistralCommon backend fails here
+        except Exception as _tok_err:
+            logger.warning(
+                "AutoTokenizer failed (%s); falling back to PreTrainedTokenizerFast.",
+                type(_tok_err).__name__,
+            )
+            tokenizer = transformers.PreTrainedTokenizerFast.from_pretrained(model_name_or_path)
+            tokenizer.model_max_length = model_max_length
+            tokenizer.padding_side = "left"
         logger.info("Loading model...")
         # Try loading with bfloat16, fallback to float32 if needed
         try:

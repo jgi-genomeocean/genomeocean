@@ -69,14 +69,24 @@ class LLMUtils:
     @property
     def tokenizer(self):
         if self._tokenizer is None:
-            self._tokenizer = transformers.AutoTokenizer.from_pretrained(
-                self.model_dir,
-                cache_dir=None,
-                model_max_length=self.model_max_length,
-                padding_side="left",
-                use_fast=True,
-                trust_remote_code=True,
-            )
+            # transformers>=5.0 may route AutoTokenizer to the MistralCommon
+            # backend (GenomeOcean ships a BPE tokenizer, not a tekken.json),
+            # which fails on some environments. Try AutoTokenizer, validate it
+            # tokenizes DNA, and fall back to PreTrainedTokenizerFast otherwise.
+            try:
+                self._tokenizer = transformers.AutoTokenizer.from_pretrained(
+                    self.model_dir,
+                    cache_dir=None,
+                    model_max_length=self.model_max_length,
+                    padding_side="left",
+                    use_fast=True,
+                    trust_remote_code=True,
+                )
+                _ = self._tokenizer.encode("ATGC")  # MistralCommon backend fails here
+            except Exception:
+                self._tokenizer = transformers.PreTrainedTokenizerFast.from_pretrained(self.model_dir)
+                self._tokenizer.model_max_length = self.model_max_length
+                self._tokenizer.padding_side = "left"
         return self._tokenizer
 
     @property
