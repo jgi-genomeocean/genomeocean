@@ -113,6 +113,34 @@ everywhere), VRAM, or the OOM boundary. Safe to upgrade.
 
 ---
 
+## Speculative decoding results (draft-model, vLLM V1)
+
+**Follow-up experiment (2026-07-01).** With V1 in place we tested **speculative decoding**:
+GenomeOcean-100M drafts `K` tokens ahead and GenomeOcean-4B verifies them in one pass. Output
+distribution is unchanged; only latency changes. Config: 1× A100-40GB, prompt length 1024, 512
+output tokens, temperature 0.7 (high enough to preserve DNA diversity), median of 3 runs.
+`K=0` is the no-spec baseline.
+
+| K | batch=1 tok/s | speedup | batch=8 tok/s | speedup |
+|---:|---:|:---:|---:|:---:|
+| 0 (baseline) | 125.8 | 1.00× | 793.9 | 1.00× |
+| **2** | **216.5** | **1.72×** | **1221.5** | **1.54×** |
+| 3 | 204.4 | 1.63× | 1059.3 | 1.33× |
+| 4 | 162.8 | 1.29× | 1099.4 | 1.38× |
+
+**Finding: K=2 is the sweet spot** — best speedup at both batch sizes (1.72× at b=1, 1.54× at
+b=8). Larger K adds draft compute that is wasted whenever the target rejects a token, so K=3/4
+regress. Peak throughput is 1221 tok/s (K=2, batch=8).
+
+**Caveat:** vLLM's V1 metrics API did not expose a mean acceptance length in this build
+(`acceptance` is `null` in the raw JSON), so speedup is the reliable metric here rather than a
+per-token acceptance rate.
+
+- Harness: `benchmarks/bench_specdec_a100.py`; submit script `benchmarks/sbatch_spec.sh`
+- Raw results: `benchmarks/results/specdec_results.json`
+
+---
+
 ## Methodology notes & fixes applied
 
 The benchmark harness required five fixes before jobs would run correctly on Perlmutter/Shifter.
@@ -148,8 +176,9 @@ reported correctly.
 
 **Merge `vllm-v1-upgrade`.** V1 is faster on generation across the board (1.1×–3.7×), scales far
 better across GPUs (6.4× vs 2.4× at TP=4), and is neutral on embedding. There is no configuration
-in which V0 wins. The upgrade also unblocks native V1 features (e.g. speculative decoding), which
-is the next investigation.
+in which V0 wins. The upgrade also unblocks native V1 features (e.g. speculative decoding, which
+we subsequently measured at up to **1.72× faster** generation — see the speculative decoding
+section above).
 
 ---
 
@@ -159,5 +188,5 @@ is the next investigation.
 - SLURM submit scripts: `benchmarks/sbatch_v{0,1}_{gen,embed}.sh`
 - Raw results (JSON, all iterations): `benchmarks/results/`
 - Both containers use anonymous NGC pulls; HF cache mounted at `/hfcache` (`HF_HOME`).
-- Jobs: `--account=m342_g --qos=debug --constraint=gpu`; gen uses 4 GPUs (sweeps TP=1,2,4),
-  embedding uses 1 GPU.
+- Jobs: submitted with `--constraint=gpu` (set your own `--account` / `--qos` for your cluster);
+  gen uses 4 GPUs (sweeps TP=1,2,4), embedding uses 1 GPU.

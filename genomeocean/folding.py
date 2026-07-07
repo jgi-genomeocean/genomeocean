@@ -20,10 +20,11 @@ import tempfile
 import subprocess
 from pathlib import Path
 
-# Default model weight cache on scratch space (avoids home quota)
+# Default model weight cache. Override with GENOMEOCEAN_MODEL_CACHE to point at
+# scratch/shared storage (recommended on HPC to avoid home-directory quotas).
 SCRATCH_CACHE = os.environ.get(
     'GENOMEOCEAN_MODEL_CACHE',
-    '/pscratch/sd/z/zhwang/model_cache'
+    os.path.join(os.path.expanduser('~'), '.cache', 'genomeocean')
 )
 
 # Point torch hub and omegafold caches to scratch
@@ -32,7 +33,7 @@ os.environ.setdefault('OMEGAFOLD_CACHE', os.path.join(SCRATCH_CACHE, 'omegafold'
 
 COLABFOLD_BIN = os.environ.get(
     'COLABFOLD_BIN',
-    '/pscratch/sd/z/zhwang/model_cache/localcolabfold/conda_env/bin/colabfold_batch'
+    os.path.join(SCRATCH_CACHE, 'localcolabfold', 'conda_env', 'bin', 'colabfold_batch')
 )
 
 
@@ -224,7 +225,7 @@ class FoldingBackend:
         candidates = [
             os.path.join(os.path.dirname(os.path.dirname(
                 os.path.abspath(__file__))), 'GO', 'bin', 'omegafold'),
-            '/global/homes/z/zhwang/pscratch/genomeocean/GO/bin/omegafold',
+            os.path.join(SCRATCH_CACHE, 'GO', 'bin', 'omegafold'),
             'omegafold',
         ]
         for c in candidates:

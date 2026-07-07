@@ -242,7 +242,64 @@ The model is **lazy-loaded** on the first call — importing the class costs not
 
 ---
 
-### 2.3 More examples
+### 2.3 Speculative decoding (faster generation)
+
+The vLLM V1 engine supports **speculative decoding**: a small, fast *draft* model
+(GenomeOcean-100M) proposes several tokens ahead, and the large *target* model
+(GenomeOcean-4B) verifies them in a single forward pass. Accepted drafts are free, so
+generation is faster with **identical output distribution** to the target model alone.
+
+Because GenomeOcean-100M and GenomeOcean-4B share the same BPE tokenizer, the 100M model is
+a natural drop-in drafter for the 4B model. Enable it by passing `speculative_config` when
+you construct the vLLM `LLM`:
+
+```python
+import torch
+from vllm import LLM, SamplingParams
+
+llm = LLM(
+    model="DOEJGI/GenomeOcean-4B",          # target model
+    dtype=torch.bfloat16,
+    max_model_len=4608,
+    gpu_memory_utilization=0.85,
+    enforce_eager=False,
+    speculative_config={
+        "method": "draft_model",
+        "model": "DOEJGI/GenomeOcean-100M",  # small, fast drafter
+        "num_speculative_tokens": 2,          # K — 2 is the sweet spot (see below)
+    },
+)
+
+sp = SamplingParams(temperature=0.7, top_p=0.9, top_k=50, max_tokens=512)
+out = llm.generate(["ATGCTAGCTAGCTAGC"], sp)
+print(out[0].outputs[0].text)
+```
+
+**How many speculative tokens (`K`)?** More is not better — a longer draft chain wins bigger
+when accepted but wastes the whole batch on rejection. On DNA (temperature 0.7, which is high
+enough to keep sequence diversity) we measured **K=2 as the sweet spot**:
+
+| K (draft tokens) | batch=1 tok/s | speedup | batch=8 tok/s | speedup |
+|---:|---:|:---:|---:|:---:|
+| 0 (baseline, no spec) | 125.8 | 1.00× | 793.9 | 1.00× |
+| **2** | **216.5** | **1.72×** | **1221.5** | **1.54×** |
+| 3 | 204.4 | 1.63× | 1059.3 | 1.33× |
+| 4 | 162.8 | 1.29× | 1099.4 | 1.38× |
+
+*GenomeOcean-4B target + GenomeOcean-100M draft, 1× A100-40GB, vLLM V1, prompt length 1024,
+512 output tokens, median of 3 runs. Full harness, raw JSON, and methodology:
+`benchmarks/bench_specdec_a100.py`, `benchmarks/results/specdec_results.json`, and
+`benchmarks/BENCHMARK_REPORT.md`.*
+
+**Notes**
+- Start with **K=2** and only raise it if you observe high acceptance on your prompts.
+- Speculative decoding trades extra GPU memory (a second model resident) for latency; make
+  sure `gpu_memory_utilization` leaves room for both models.
+- Speculative decoding requires the vLLM **V1** engine (see §1.3).
+
+---
+
+### 2.4 More examples
 
 See the `examples/` folder for advanced usage including autocomplete with structure scoring and artificial sequence detection.
 
