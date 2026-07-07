@@ -1,4 +1,4 @@
-# [GenomeOcean: An Efficient Genome Foundation Model Trained on Large-Scale Metagenomic Assemblies](https://www.biorxiv.org/content/10.1101/2025.01.30.635558v1)
+# [GenomeOcean: An Efficient Genome Foundation Model Trained on Large-Scale Metagenomic Assemblies](https://www.biorxiv.org/content/10.1101/2025.01.30.635558v2)
 
 ![Figure 1](figures/Overview.jpeg)
 
@@ -95,7 +95,7 @@ We recommend using the `GenomeOcean-4B` model for general-purpose genome sequenc
 
 ### 2.1. Sequence Embedding
 ```bash
-cd genomeocean/examples
+cd examples
 python embedding_sequences.py \
     --model_dir pGenomeOcean/GenomeOcean-4B \
     --sequence_file ../sample_data/dna_sequences.txt \
@@ -106,7 +106,7 @@ python embedding_sequences.py \
 
 ### 2.2. Sequence Generation
 ```bash
-cd genomeocean/examples
+cd examples
 python generate_sequences.py \
     --model_dir pGenomeOcean/GenomeOcean-4B \
     --promptfile ../sample_data/dna_sequences.txt \
@@ -137,7 +137,7 @@ Please submit pull requests and issues to the main branch.
 
 ## 4. Citation
 
-Zhou, Zhihan, et al. "GenomeOcean: An Efficient Genome Foundation Model Trained on Large-Scale Metagenomic Assemblies." bioRxiv (2025): 2025-01. (https://www.biorxiv.org/content/10.1101/2025.01.30.635558v1.full)
+Zhou, Zhihan, et al. "GenomeOcean: An Efficient Genome Foundation Model Trained on Large-Scale Metagenomic Assemblies." bioRxiv (2025): 2025-01. (https://www.biorxiv.org/content/10.1101/2025.01.30.635558v2.full)
 
 ```
 @article{zhou2025genomeocean,

@@ -1,20 +1,20 @@
 #!/bin/bash
 #SBATCH --job-name=gov0gen
-#SBATCH --account=m342_g
-#SBATCH --qos=debug
+#SBATCH --account=<YOUR_SLURM_ACCOUNT>
+#SBATCH --qos=<YOUR_SLURM_QOS>
 #SBATCH --constraint=gpu
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=32
 #SBATCH --gpus=4
 #SBATCH --time=00:30:00
-#SBATCH --output=/pscratch/sd/z/zhwang/genomeocean-vllm-v1/bench/v0_gen_%j.log
-#SBATCH --error=/pscratch/sd/z/zhwang/genomeocean-vllm-v1/bench/v0_gen_%j.err
+#SBATCH --output=v0_gen_%j.log
+#SBATCH --error=v0_gen_%j.err
 
 set -e
-BENCH=/pscratch/sd/z/zhwang/genomeocean-vllm-v1/bench
-REPO=/pscratch/sd/z/zhwang/genomeocean-vllm-v1/main
-HF_CACHE=/pscratch/sd/z/zhwang/.cache/huggingface
+BENCH=${GO_BENCH_DIR:-$PWD}
+REPO=${GO_REPO_DIR:-$PWD/..}
+HF_CACHE=${HF_HOME:-$HOME/.cache/huggingface}
 
 echo "=== V0 generation benchmark — $(date) ==="
 echo "Node: $(hostname)  Job: $SLURM_JOB_ID"

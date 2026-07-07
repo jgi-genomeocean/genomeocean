@@ -159,5 +159,5 @@ is the next investigation.
 - SLURM submit scripts: `benchmarks/sbatch_v{0,1}_{gen,embed}.sh`
 - Raw results (JSON, all iterations): `benchmarks/results/`
 - Both containers use anonymous NGC pulls; HF cache mounted at `/hfcache` (`HF_HOME`).
-- Jobs: `--account=m342_g --qos=debug --constraint=gpu`; gen uses 4 GPUs (sweeps TP=1,2,4),
-  embedding uses 1 GPU.
+- Jobs: submitted with `--constraint=gpu` (set your own `--account` / `--qos` for your cluster);
+  gen uses 4 GPUs (sweeps TP=1,2,4), embedding uses 1 GPU.
