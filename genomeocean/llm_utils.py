@@ -80,7 +80,7 @@ class LLMUtils:
                     model_max_length=self.model_max_length,
                     padding_side="left",
                     use_fast=True,
-                    trust_remote_code=True,
+                    trust_remote_code=False,
                 )
                 _ = self._tokenizer.encode("ATGC")  # MistralCommon backend fails here
             except Exception:
@@ -107,7 +107,7 @@ class LLMUtils:
             MODEL_CLASS = transformers.AutoModel if not self.is_classification_model else transformers.AutoModelForSequenceClassification
             self._model = MODEL_CLASS.from_pretrained(
                 self.model_dir,
-                trust_remote_code=True,
+                trust_remote_code=False,
                 torch_dtype=torch.bfloat16,
                 attn_implementation="sdpa",
             )

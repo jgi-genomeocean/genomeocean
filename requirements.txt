@@ -3,11 +3,13 @@
 
 # Primary Dependencies
 # vLLM 0.24+ ships the V1 engine as default (V0 was removed in 0.11).
-# transformers 5.12.1+ is the lowest version we have validated against the
-# V1 engine + GenomeOcean checkpoints (with the PreTrainedTokenizerFast
-# workaround in genomeocean/llm_utils.py for MistralCommonBackend).
+# transformers 4.36+ is required (Mistral architecture was introduced in 4.36).
+# vLLM 0.24+ (V1 engine) may impose a higher floor independently; install
+# vLLM first and let it constrain transformers if you use the vLLM path.
+# Note: transformers 5.0-5.12.x had a silent model-corruption bug via the
+# now-removed vendored modeling_mistral.py; that code is gone as of this fix.
 vllm>=0.24.0
-transformers>=5.12.1
+transformers>=4.36
 peft
 accelerate
 bitsandbytes

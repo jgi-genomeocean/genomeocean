@@ -20,7 +20,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "transformers>=5.12.1",
+    "transformers>=4.36",
     "peft",
     "accelerate",
     "pandas",

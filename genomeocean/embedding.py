@@ -127,7 +127,7 @@ def llm_embed_sequences(dna_sequences,
         try:
             model = transformers.AutoModel.from_pretrained(
                 model_name_or_path,
-                trust_remote_code=True,
+                trust_remote_code=False,
                 torch_dtype=torch.bfloat16,
                 attn_implementation=attn_implementation,
             )
@@ -137,7 +137,7 @@ def llm_embed_sequences(dna_sequences,
              logger.warning(f"Failed to load model with bfloat16 ({e}). Falling back to default (float32).")
              model = transformers.AutoModel.from_pretrained(
                 model_name_or_path,
-                trust_remote_code=True,
+                trust_remote_code=False,
                 # dtype=torch.float32, # Default
              )
              model.config.use_cache = False
