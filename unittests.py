@@ -120,11 +120,11 @@ class TestLLMUtils(unittest.TestCase):
                 model_max_length=10240,
                 padding_side="left",
                 use_fast=True,
-                trust_remote_code=True,
+                trust_remote_code=False,
             )
             mock_model.assert_called_once_with(
                 "test_classifier",
-                trust_remote_code=True,
+                trust_remote_code=False,
                 torch_dtype=torch.bfloat16,
                 attn_implementation="sdpa",
             )
